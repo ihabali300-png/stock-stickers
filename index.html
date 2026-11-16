@@ -129,7 +129,7 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
   <div class="tools">
     <button class="tb pri" id="bPdf">طباعة 🖨️</button>
     <button class="tb" id="bSort">ترتيب وفلترة ↕️</button>
-    <button class="tb" id="bNew">موديل وصل جديد R ➕</button>
+    <button class="tb" id="bNew">موديل وصل جديد ➕</button>
     <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
     <button class="tb" id="bMore">المزيد ⋯</button>
   </div>
@@ -180,7 +180,7 @@ const T = () => S.tabs[cur];
 const textCol = tab => tab.colT.indexOf('text');
 const rowModel = (tab, it) => { const i = textCol(tab); return i < 0 ? '' : String(it.t[i] || '').trim(); };
 const lateIdx = tab => Math.min(1, tab.colT.length - 1);
-function headText(tab, b, c) { let s = b.head[c] || ''; if (b.late && c === lateIdx(tab)) s = (s + ' R').trim(); return s; }
+function headText(tab, b, c) { let s = b.head[c] || ''; if (b.late && c === lateIdx(tab)) s = (s + ' ' + (b.mk || 'R')).trim(); return s; }
 function skuFor(m) { if (!m || !S.skus) return ''; if (S.skus[m]) return S.skus[m]; const n = String(parseInt(m, 10)); return /^\d/.test(m) && S.skus[n] ? S.skus[n] : ''; }
 function qrFromSku(k) { return k; }
 function qrValue(tab, it, c) { if (it.t[c]) return it.t[c]; const m = rowModel(tab, it); if (!m) return ''; const k = skuFor(m); if (k) return qrFromSku(k); return S.qrTpl === '{model}' && S.skus && Object.keys(S.skus).length ? '' : S.qrTpl.replace(/\{model\}/g, m); }
@@ -410,7 +410,7 @@ function searchModels(q) {
   S.tabs.forEach((t, ti) => t.blocks.forEach((b, bi) => { if (b.hidden) return; b.items.forEach((it, r) => {
     const m = rowModel(t, it); if (!m) return; const k = skuFor(m);
     const ml = m.toLowerCase(), score = ml === q ? 0 : ml.startsWith(q) ? 1 : ml.includes(q) ? 2 : (k && k.toLowerCase().includes(q)) ? 3 : -1;
-    if (score >= 0) out.push({ti, bi, r, m, k, score, late: b.late});
+    if (score >= 0) out.push({ti, bi, r, m, k, score, late: b.late, mk: b.mk});
   }); }));
   return out.sort((a, b) => a.score - b.score || ncmp(a.m, b.m)).slice(0, 40);
 }
@@ -418,7 +418,7 @@ function renderQ() {
   const q = $('#q').value, box = $('#qres');
   if (!q.trim()) { box.classList.remove('on'); return; }
   qList = searchModels(q); qSel = 0;
-  box.innerHTML = qList.length ? qList.map((x, i) => { const t = S.tabs[x.ti], im = findImg(x.m); return `<div class="sr ${i === 0 ? 'act' : ''}" data-i="${i}">${im ? `<img src="${im.d}">` : '<span style="width:46px;text-align:center">🕶️</span>'}<div><div class="m">${esc(x.m)}</div>${x.k ? `<div class="k">${esc(x.k)}</div>` : ''}</div><div class="w">${esc(tabLabel(t))}<br><span dir="rtl">مربع ${x.bi + 1} — صف ${x.r + 1}</span>${x.late ? ' <b style="color:#b45309">R</b>' : ''}</div></div>`; }).join('') : '<div class="sr" style="cursor:default;color:var(--mut)">مفيش موديل بالرقم ده</div>';
+  box.innerHTML = qList.length ? qList.map((x, i) => { const t = S.tabs[x.ti], im = findImg(x.m); return `<div class="sr ${i === 0 ? 'act' : ''}" data-i="${i}">${im ? `<img src="${im.d}">` : '<span style="width:46px;text-align:center">🕶️</span>'}<div><div class="m">${esc(x.m)}</div>${x.k ? `<div class="k">${esc(x.k)}</div>` : ''}</div><div class="w">${esc(tabLabel(t))}<br><span dir="rtl">مربع ${x.bi + 1} — صف ${x.r + 1}</span>${x.late ? ' <b style="color:#b45309">' + esc(x.mk || 'R') + '</b>' : ''}</div></div>`; }).join('') : '<div class="sr" style="cursor:default;color:var(--mut)">مفيش موديل بالرقم ده</div>';
   box.classList.add('on');
 }
 function goHit(x) {
@@ -516,6 +516,10 @@ function sortGroup(tabs, cmp, L) {
   const items = [];
   tabs.forEach(t => t.blocks.forEach(b => { if (!b.hidden) b.items.forEach(it => { if (rowModel(t, it)) items.push(it); }); }));
   items.sort((a, b) => cmp(rowModel(t0, a), rowModel(t0, b)));
+  return fillGroup(tabs, items, L);
+}
+function groupItems(tabs) { const items = []; tabs.forEach(t => t.blocks.forEach(b => { if (!b.hidden) b.items.forEach(it => { if (rowModel(t, it)) items.push(it); }); })); return items; }
+function fillGroup(tabs, items, L) {
   let k = 0, num = 0, added = 0;
   const fill = t => t.blocks.forEach(b => {
     if (b.hidden) return;
@@ -550,7 +554,7 @@ function openEditor() {
   let h = '';
   if (isHead) {
     h += '<div class="row">' + tab.colT.map((t, c) => `<div class="fld"><label>خانة ${c + 1} في الهيدر</label><input type="text" class="ltr" data-h="${c}" value="${esc(b.head[c])}"></div>`).join('') + '</div>';
-    h += `<div class="row"><button class="btn ${b.late ? 'on' : ''}" data-a="late">علامة R (وصل بعد الترتيب) ${b.late ? '✓' : ''}</button></div>`;
+    h += `<div class="row"><span class="small">علامة وصل بعد الترتيب:</span><button class="btn ${b.late && (b.mk || 'R') === 'R' ? 'on' : ''}" data-a="late" data-mk="R">علامة R</button><button class="btn ${b.late && b.mk === 'N' ? 'on' : ''}" data-a="late" data-mk="N">علامة N</button></div>`;
   } else {
     const it = b.items[sel.r], m = rowModel(tab, it);
     tab.colT.forEach((t, c) => {
@@ -564,7 +568,7 @@ function openEditor() {
   h += `<div class="grp"><h4>المربع كله</h4><div class="row">
     <button class="btn" data-a="addRow">إضافة صف ➕</button>
     <button class="btn" data-a="sort">ترتيب تصاعدي ↕️</button>
-    ${isHead ? '' : `<button class="btn ${b.late ? 'on' : ''}" data-a="late">علامة R ${b.late ? '✓' : ''}</button>`}
+    ${isHead ? '' : `<button class="btn ${b.late && (b.mk || 'R') === 'R' ? 'on' : ''}" data-a="late" data-mk="R">علامة R</button><button class="btn ${b.late && b.mk === 'N' ? 'on' : ''}" data-a="late" data-mk="N">علامة N</button>`}
     <button class="btn" data-a="cpBlock">نسخ موديلات المربع 📋</button>
     <button class="btn" data-a="hide">إخفاء المربع 👁️</button>
     <button class="btn dan" data-a="clear">تفريغ المربع 🧹</button></div></div>`;
@@ -578,7 +582,7 @@ function openEditor() {
     const cp = e.target.closest('[data-cp]');
     if (cp) { const k = cp.dataset.cp, c = +k.slice(1), it = b.items[sel.r]; if (k[0] === 't') copyText(String(it.t[c] || '').trim(), 'الرقم'); else copyText(qrValue(tab, it, c), 'الكود'); return; }
     const btn = e.target.closest('[data-a]'); if (!btn) return; const a = btn.dataset.a;
-    if (a === 'late') { b.late = !b.late; changed(); openEditor(); }
+    if (a === 'late') { const k = btn.dataset.mk || 'R'; if (b.late && (b.mk || 'R') === k) b.late = false; else { b.late = true; b.mk = k; } changed(); openEditor(); }
     if (a === 'next' || a === 'prev') { moveSel(a === 'next' ? 1 : -1); }
     if (a === 'up' && sel.r > 0) { [b.items[sel.r - 1], b.items[sel.r]] = [b.items[sel.r], b.items[sel.r - 1]]; sel.r--; changed(); openEditor(); }
     if (a === 'down' && sel.r < b.items.length - 1) { [b.items[sel.r + 1], b.items[sel.r]] = [b.items[sel.r], b.items[sel.r + 1]]; sel.r++; changed(); openEditor(); }
@@ -702,20 +706,62 @@ function openSettings() {
 }
 
 /* ---------- new arrival (R) ---------- */
-$('#bNew').onclick = async () => {
-  const tab = T(), tc = textCol(tab); if (tc < 0) return toast('مفيش عمود نص للموديل');
-  const m = await askText('رقم الموديل اللي وصل جديد', ''); if (!m) return;
-  for (let i = 0; i < tab.blocks.length; i++) {
-    const b = tab.blocks[i]; if (b.hidden) continue;
-    const r = b.items.findIndex(it => !rowModel(tab, it));
-    if (r >= 0) {
-      b.items[r].t[tc] = m;
-      if (!b.head.some(x => String(x).trim())) { const ref = tab.blocks.slice(0, i).reverse().find(x => !x.hidden && x.head.some(y => String(y).trim())); if (ref) { b.head = [...ref.head]; const li = lateIdx(tab); const n = parseInt(ref.head[li]); if (!isNaN(n)) b.head[li] = String(n + 1); } }
-      b.late = true; sel = {b: i, r}; changed(); render(true); openEditor(); toast(`اتحط في مربع ${i + 1} بعلامة R`); return;
-    }
-  }
-  toast('مفيش مكان فاضي في الصفحة — زوّد صف أو مربعات من الإعدادات');
+let lastNew = {mode: 'order', mk: 'R'};
+$('#bNew').onclick = () => {
+  const t = T(), o = lastNew;
+  const m = modal(`<div class="sb"><b>موديل وصل جديد ➕</b> <span class="small" style="direction:ltr;display:inline-block">${esc(t.col + ' ' + t.gen)}</span>
+   <div class="fld" style="margin-top:10px"><label>رقم الموديل (تقدر تكتب أكتر من رقم بينهم مسافة)</label><input type="text" id="nM" class="ltr" inputmode="numeric" autocomplete="off"></div>
+   <div class="grp" style="border:none;padding-top:0;margin-top:4px"><h4>يتضاف إزاي</h4>
+   <label style="display:block;padding:5px 0"><input type="radio" name="nm" value="order" ${o.mode === 'order' ? 'checked' : ''}> عادي في مكانه بالترتيب التصاعدي <span class="small">(الموديلات اللي بعده بتتزحزح والمربعات بتتعاد ترقيمها)</span></label>
+   <label style="display:block;padding:5px 0"><input type="radio" name="nm" value="mark" ${o.mode === 'mark' ? 'checked' : ''}> في الآخر بعلامة وصل جديد <span class="small">(من غير ما يتحرك أي حاجة)</span></label>
+   <div id="mkRow" class="row" style="margin:4px 22px 0;display:${o.mode === 'mark' ? 'flex' : 'none'}"><span class="small">العلامة:</span><label><input type="radio" name="mk" value="R" ${o.mk === 'R' ? 'checked' : ''}> R</label><label><input type="radio" name="mk" value="N" ${o.mk === 'N' ? 'checked' : ''}> N</label></div></div>
+   <div class="row"><button class="btn pri" id="nGo">إضافة</button><button class="btn" id="nX">إلغاء</button></div></div>`);
+  const inp = m.querySelector('#nM'); setTimeout(() => inp.focus(), 60);
+  m.querySelectorAll('input[name=nm]').forEach(r => r.onchange = () => { m.querySelector('#mkRow').style.display = m.querySelector('input[name=nm]:checked').value === 'mark' ? 'flex' : 'none'; });
+  m.querySelector('#nX').onclick = closeModal;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') m.querySelector('#nGo').click(); });
+  m.querySelector('#nGo').onclick = () => {
+    const models = inp.value.split(/[\s,،;]+/).map(x => x.trim()).filter(Boolean); if (!models.length) return toast('اكتب رقم الموديل');
+    lastNew = {mode: m.querySelector('input[name=nm]:checked').value, mk: m.querySelector('input[name=mk]:checked').value};
+    closeModal(); addNewModels(models, lastNew);
+  };
 };
+function addNewModels(models, o) {
+  const t = T(), tc = textCol(t); if (tc < 0) return toast('مفيش عمود نص للموديل');
+  const tabs = pagesOf(t.col, t.gen).map(i => S.tabs[i]);
+  const exists = new Set(groupItems(tabs).map(it => rowModel(t, it).toLowerCase()));
+  const dup = models.filter(x => exists.has(x.toLowerCase())); models = models.filter(x => !exists.has(x.toLowerCase()));
+  if (!models.length) return toast(`الموديل ${dup.join('، ')} موجود بالفعل في القسم ده`);
+  const mkItem = x => { const it = {t: t.colT.map(() => '')}; it.t[tc] = x; return it; };
+  let added = 0;
+  if (o.mode === 'order') {
+    const items = groupItems(tabs);
+    models.forEach(x => { let p = items.findIndex(it => ncmp(rowModel(t, it), x) > 0); if (p < 0) p = items.length; items.splice(p, 0, mkItem(x)); });
+    added = fillGroup(tabs, items, {clearR: false, renum: true});
+  } else {
+    const flat = []; tabs.forEach(tb => tb.blocks.forEach(b => { if (!b.hidden) flat.push({tb, b}); }));
+    models.forEach(x => {
+      let lastUsed = -1; flat.forEach((f, i) => { if (f.b.items.some(it => rowModel(f.tb, it))) lastUsed = i; });
+      let slot = null;
+      const L = flat[lastUsed];
+      if (L && L.b.late && (L.b.mk || 'R') === o.mk) { const r = L.b.items.findIndex(it => !rowModel(L.tb, it)); if (r >= 0) slot = {f: L, r}; }
+      if (!slot) {
+        let nx = flat[lastUsed + 1];
+        if (!nx) { const last = tabs[tabs.length - 1], nt = JSON.parse(JSON.stringify(last)); nt.id = uid(); nt.blocks = []; ensureBlocks(nt); const per = L ? L.b.items.length : 3; nt.blocks.forEach(b => { b.items = Array.from({length: per}, () => ({t: nt.colT.map(() => '')})); }); S.tabs.splice(S.tabs.indexOf(last) + 1, 0, nt); tabs.push(nt); nt.blocks.forEach(b => flat.push({tb: nt, b})); nx = flat[lastUsed + 1]; added++; }
+        const li = lateIdx(nx.tb), prevNum = L ? parseInt(L.b.head[li]) : 0;
+        nx.b.head = nx.tb.colT.map((_, c) => c === 0 ? t.col : c === li ? String((isNaN(prevNum) ? 0 : prevNum) + 1) : c === nx.tb.colT.length - 1 ? t.gen : '');
+        nx.b.late = true; nx.b.mk = o.mk; nx.b.items.forEach(it => it.t = it.t.map(() => ''));
+        slot = {f: nx, r: 0};
+      }
+      slot.f.b.items[slot.r] = mkItem(x);
+    });
+  }
+  const first = models[0]; let hit = null;
+  S.tabs.forEach((tb, ti) => tb.blocks.forEach((b, bi) => b.items.forEach((it, r) => { if (!hit && rowModel(tb, it) === first && tb.col === t.col && tb.gen === t.gen) hit = {ti, bi, r}; })));
+  changed();
+  if (hit) { cur = hit.ti; sel = {b: hit.bi, r: hit.r}; render(true); openEditor(); setTimeout(() => { const tr = $(`#wrap table.blk[data-b="${hit.bi}"] tr[data-r="${hit.r}"]`); if (tr) tr.querySelectorAll('td').forEach(td => td.classList.add('hit')); }, 260); }
+  toast(`اتضاف ${models.length} موديل ✓` + (o.mode === 'mark' ? ` بعلامة ${o.mk}` : ' في مكانه') + (added ? ` — واتعملت ${added} صفحة جديدة` : '') + (dup.length ? ` (موجود قبل كده: ${dup.join('، ')})` : ''));
+}
 
 /* ---------- import ---------- */
 function parseDelim(text) {
