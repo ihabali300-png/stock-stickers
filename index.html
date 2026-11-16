@@ -15,23 +15,26 @@ body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--ink
 button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:15px}
 .top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:8px;padding:8px 12px 4px}
+.brand{display:flex;align-items:center;gap:8px 12px;padding:8px 12px 4px;flex-wrap:wrap}
 .brand h1{font-size:16px;margin:0;font-weight:800}
 .status{margin-inline-start:auto;font-size:12px;color:var(--mut);background:#f3f4f6;border-radius:99px;padding:2px 10px;white-space:nowrap}
 .status.ok{color:var(--acc);background:var(--acc2)}
 .status.warn{color:var(--warn);background:#fef3c7}
 .nav{padding:4px 10px 2px}
-.srch{position:relative;padding:2px 10px 6px}
-.srch input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px;background:#f8fafc}
+.srch{position:relative;order:3;flex:1 1 100%}
+.srch .sic{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.55;pointer-events:none}
+.srch input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:6px 32px 6px 10px;font-size:14px;background:#f8fafc;height:36px}
+@media (min-width:700px){.srch{order:0;flex:0 1 340px;margin-inline-start:auto}.brand .status{margin-inline-start:0}}
 .srch input:focus{outline:none;border-color:var(--acc);background:#fff}
-.sres{position:absolute;left:10px;right:10px;top:100%;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);max-height:55vh;overflow:auto;z-index:30;display:none}
+.sres{position:absolute;left:0;right:0;top:calc(100% + 4px);min-width:min(440px,92vw);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);max-height:55vh;overflow:auto;z-index:30;display:none}
 .sres.on{display:block}
 .sr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer}
 .sr:hover,.sr.act{background:var(--acc2)}
 .sr img{width:46px;height:28px;object-fit:contain}
 .sr .m{font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:15px;direction:ltr}
 .sr .w{font-size:12px;color:var(--mut);margin-inline-start:auto;text-align:left;direction:ltr}
-.sr .k{font-size:11px;color:var(--mut);direction:ltr}
+.sr .k{font-size:11px;color:var(--mut);direction:ltr;white-space:nowrap}
+.sr .w{white-space:nowrap}
 .blk td.hit{animation:hit 1.6s ease 2}
 @keyframes hit{0%,100%{background:#fff}50%{background:#fde68a}}
 .mrow{display:flex;gap:8px}
@@ -123,8 +126,7 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
 </head>
 <body>
 <div class="top">
-  <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><span id="status" class="status">جاري التحميل…</span></div>
-  <div class="srch"><input type="search" id="q" placeholder="ابحث برقم الموديل أو الكود…" autocomplete="off" inputmode="search"><div class="sres" id="qres"></div></div>
+  <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><div class="srch"><span class="sic">🔍</span><input type="search" id="q" placeholder="ابحث برقم الموديل أو الكود…" autocomplete="off" inputmode="search"><div class="sres" id="qres"></div></div><span id="status" class="status">جاري التحميل…</span></div>
   <div class="nav" id="tabs"></div>
   <div class="tools">
     <button class="tb pri" id="bPdf">طباعة 🖨️</button>
