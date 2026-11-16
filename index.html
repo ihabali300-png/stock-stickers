@@ -21,6 +21,19 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .status.ok{color:var(--acc);background:var(--acc2)}
 .status.warn{color:var(--warn);background:#fef3c7}
 .nav{padding:4px 10px 2px}
+.srch{position:relative;padding:2px 10px 6px}
+.srch input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px;background:#f8fafc}
+.srch input:focus{outline:none;border-color:var(--acc);background:#fff}
+.sres{position:absolute;left:10px;right:10px;top:100%;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);max-height:55vh;overflow:auto;z-index:30;display:none}
+.sres.on{display:block}
+.sr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.sr:hover,.sr.act{background:var(--acc2)}
+.sr img{width:46px;height:28px;object-fit:contain}
+.sr .m{font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:15px;direction:ltr}
+.sr .w{font-size:12px;color:var(--mut);margin-inline-start:auto;text-align:left;direction:ltr}
+.sr .k{font-size:11px;color:var(--mut);direction:ltr}
+.blk td.hit{animation:hit 1.6s ease 2}
+@keyframes hit{0%,100%{background:#fff}50%{background:#fde68a}}
 .mrow{display:flex;gap:8px}
 .mt{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:6px 6px 5px;display:flex;flex-direction:column;align-items:center;line-height:1.2;max-width:220px}
 .mt b{font-size:18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.5px}
@@ -111,6 +124,7 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
 <body>
 <div class="top">
   <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><span id="status" class="status">جاري التحميل…</span></div>
+  <div class="srch"><input type="search" id="q" placeholder="ابحث برقم الموديل أو الكود…" autocomplete="off" inputmode="search"><div class="sres" id="qres"></div></div>
   <div class="nav" id="tabs"></div>
   <div class="tools">
     <button class="tb pri" id="bPdf">طباعة 🖨️</button>
@@ -388,6 +402,43 @@ function tabMenu() {
     if (a === 'del') { if (S.tabs.length === 1) { toast('لازم تفضل صفحة واحدة على الأقل'); return; } if (await ask(`حذف صفحة «${esc(tabLabel(T()))}» نهائيًا؟`, 'حذف', true)) { const col = T().col, gen = T().gen; S.tabs.splice(cur, 1); const sib = pagesOf(col, gen), sc = pagesOf(col, genList(col)[0]); cur = sib.length ? sib[Math.max(0, Math.min(sib.length - 1, pageNo(sib[0]) - 1))] : sc.length ? sc[0] : 0; sel = null; changed(); } }
   };
 }
+/* ---------- search ---------- */
+let hitAt = null, qSel = 0, qList = [];
+function searchModels(q) {
+  q = q.trim().toLowerCase(); if (!q) return [];
+  const out = [];
+  S.tabs.forEach((t, ti) => t.blocks.forEach((b, bi) => { if (b.hidden) return; b.items.forEach((it, r) => {
+    const m = rowModel(t, it); if (!m) return; const k = skuFor(m);
+    const ml = m.toLowerCase(), score = ml === q ? 0 : ml.startsWith(q) ? 1 : ml.includes(q) ? 2 : (k && k.toLowerCase().includes(q)) ? 3 : -1;
+    if (score >= 0) out.push({ti, bi, r, m, k, score, late: b.late});
+  }); }));
+  return out.sort((a, b) => a.score - b.score || ncmp(a.m, b.m)).slice(0, 40);
+}
+function renderQ() {
+  const q = $('#q').value, box = $('#qres');
+  if (!q.trim()) { box.classList.remove('on'); return; }
+  qList = searchModels(q); qSel = 0;
+  box.innerHTML = qList.length ? qList.map((x, i) => { const t = S.tabs[x.ti], im = findImg(x.m); return `<div class="sr ${i === 0 ? 'act' : ''}" data-i="${i}">${im ? `<img src="${im.d}">` : '<span style="width:46px;text-align:center">🕶️</span>'}<div><div class="m">${esc(x.m)}</div>${x.k ? `<div class="k">${esc(x.k)}</div>` : ''}</div><div class="w">${esc(tabLabel(t))}<br><span dir="rtl">مربع ${x.bi + 1} — صف ${x.r + 1}</span>${x.late ? ' <b style="color:#b45309">R</b>' : ''}</div></div>`; }).join('') : '<div class="sr" style="cursor:default;color:var(--mut)">مفيش موديل بالرقم ده</div>';
+  box.classList.add('on');
+}
+function goHit(x) {
+  if (!x) return;
+  $('#qres').classList.remove('on'); $('#q').blur();
+  cur = x.ti; sel = {b: x.bi, r: x.r}; hitAt = {b: x.bi, r: x.r};
+  render(true); openEditor();
+  setTimeout(() => { const tr = $(`#wrap table.blk[data-b="${x.bi}"] tr[data-r="${x.r}"]`); if (tr) { tr.querySelectorAll('td').forEach(td => td.classList.add('hit')); tr.scrollIntoView({block: 'center', behavior: 'smooth'}); } }, 260);
+}
+$('#q').addEventListener('input', renderQ);
+$('#q').addEventListener('focus', renderQ);
+$('#q').addEventListener('keydown', e => {
+  const rows = [...$('#qres').querySelectorAll('.sr[data-i]')];
+  if (e.key === 'Enter') { e.preventDefault(); goHit(qList[qSel]); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!rows.length) return; qSel = (qSel + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length; rows.forEach((r, i) => r.classList.toggle('act', i === qSel)); rows[qSel].scrollIntoView({block: 'nearest'}); }
+  else if (e.key === 'Escape') { $('#qres').classList.remove('on'); }
+});
+$('#qres').addEventListener('click', e => { const r = e.target.closest('.sr[data-i]'); if (r) goHit(qList[+r.dataset.i]); });
+document.addEventListener('click', e => { if (!e.target.closest('.srch')) $('#qres').classList.remove('on'); });
+
 /* ---------- copy lists ---------- */
 function copyList(tabs, what, onlyBlock) {
   const lines = [];
