@@ -14,17 +14,23 @@ html,body{margin:0;height:100%}
 body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
 button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:15px}
-.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:8px 12px;padding:8px 12px 4px;flex-wrap:wrap}
-.brand h1{font-size:16px;margin:0;font-weight:800}
-.status{margin-inline-start:auto;font-size:12px;color:var(--mut);background:#f3f4f6;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.top{position:relative;z-index:20;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(15,23,42,.04)}
+.tin{max-width:1100px;margin:0 auto;padding:0 12px}
+.hero{position:relative;text-align:center;padding:18px 70px 10px}
+.hero h1{margin:0;font-size:clamp(22px,4vw,34px);font-weight:800;letter-spacing:-.3px;line-height:1.25}
+.hero p{margin:4px 0 0;color:var(--mut);font-size:13px;font-weight:600}
+.hero .status{position:absolute;left:0;top:18px}
+.bar{display:flex;align-items:center;gap:10px;padding:12px 0;margin-top:10px;border-top:1px dashed var(--line);flex-wrap:wrap}
+.bar .srch{flex:0 1 360px}
+.bar .tools{margin-inline-start:auto}
+@media (max-width:760px){.hero{padding:14px 0 6px}.hero .status{position:static;display:inline-block;margin-top:6px}.bar .srch{flex:1 1 100%}.bar .tools{margin-inline-start:0;width:100%}}
+.status{font-size:12px;color:var(--mut);background:#f3f4f6;border-radius:99px;padding:2px 10px;white-space:nowrap}
 .status.ok{color:var(--acc);background:var(--acc2)}
 .status.warn{color:var(--warn);background:#fef3c7}
-.nav{padding:4px 10px 2px}
-.srch{position:relative;order:3;flex:1 1 100%}
+.nav{padding:6px 0 0;display:flex;flex-direction:column;align-items:center}
+.srch{position:relative}
 .srch .sic{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.55;pointer-events:none}
 .srch input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:6px 32px 6px 10px;font-size:14px;background:#f8fafc;height:36px}
-@media (min-width:700px){.srch{order:0;flex:0 1 340px;margin-inline-start:auto}.brand .status{margin-inline-start:0}}
 .srch input:focus{outline:none;border-color:var(--acc);background:#fff}
 .sres{position:absolute;left:0;right:0;top:calc(100% + 4px);min-width:min(440px,92vw);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);max-height:55vh;overflow:auto;z-index:30;display:none}
 .sres.on{display:block}
@@ -37,23 +43,24 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .sr .w{white-space:nowrap}
 .blk td.hit{animation:hit 1.6s ease 2}
 @keyframes hit{0%,100%{background:#fff}50%{background:#fde68a}}
-.mrow{display:flex;gap:8px}
-.mt{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:6px 6px 5px;display:flex;flex-direction:column;align-items:center;line-height:1.2;max-width:220px}
-.mt b{font-size:18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.5px}
+.mrow{display:flex;gap:10px;justify-content:center;width:100%}
+.mt{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:9px 8px 7px;display:flex;flex-direction:column;align-items:center;line-height:1.2;max-width:230px;transition:all .15s}
+.mt:hover{border-color:#94a3b8}
+.mt b{font-size:22px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.5px}
 .mt small{font-size:11px;color:var(--mut);font-weight:600}
 .mt.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .mt.on small{color:#cbd5e1}
-.srow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.st{border:1px solid var(--line);background:#f8fafc;border-radius:99px;padding:4px 14px;font-size:13.5px;font-weight:700;font-family:Arial,Helvetica,sans-serif}
+.srow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.st{border:1px solid var(--line);background:#f8fafc;border-radius:99px;padding:5px 18px;font-size:14px;font-weight:700;font-family:Arial,Helvetica,sans-serif}
 .st .cnt{font-size:11px;color:var(--mut);font-weight:600;margin:0 6px}
 .st.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .st.on .cnt{color:#ccfbf1}
-.prow{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.prow{display:flex;gap:6px;margin-top:10px;align-items:center;flex-wrap:wrap;justify-content:center}
 .prow .lbl{font-size:12px;color:var(--mut);font-weight:700}
 .pg{min-width:34px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:3px 9px;font-size:13px;font-weight:700}
 .pg.on{background:var(--acc2);border-color:var(--acc);color:var(--acc)}
 .pg.add{color:var(--acc)}
-.tools{display:flex;gap:6px;overflow-x:auto;padding:4px 10px 8px;scrollbar-width:none}
+.tools{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .tools::-webkit-scrollbar{display:none}
 .tb{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-size:13px;font-weight:700;white-space:nowrap}
 .tb.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
@@ -125,17 +132,20 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
 </style>
 </head>
 <body>
-<div class="top">
-  <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><div class="srch"><span class="sic">🔍</span><input type="search" id="q" placeholder="ابحث برقم الموديل أو الكود…" autocomplete="off" inputmode="search"><div class="sres" id="qres"></div></div><span id="status" class="status">جاري التحميل…</span></div>
+<div class="top"><div class="tin">
+  <header class="hero"><h1>استيكرات ترتيب الستوك 🕶️</h1><p>تصميم وطباعة استيكرات رفوف النظارات</p><span id="status" class="status">جاري التحميل…</span></header>
   <div class="nav" id="tabs"></div>
-  <div class="tools">
-    <button class="tb pri" id="bPdf">طباعة 🖨️</button>
-    <button class="tb" id="bSort">ترتيب وفلترة ↕️</button>
-    <button class="tb" id="bNew">موديل وصل جديد ➕</button>
-    <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
-    <button class="tb" id="bMore">المزيد ⋯</button>
+  <div class="bar">
+    <div class="srch"><span class="sic">🔍</span><input type="search" id="q" placeholder="ابحث برقم الموديل أو الكود…" autocomplete="off" inputmode="search"><div class="sres" id="qres"></div></div>
+    <div class="tools">
+      <button class="tb pri" id="bPdf">طباعة 🖨️</button>
+      <button class="tb" id="bSort">ترتيب وفلترة ↕️</button>
+      <button class="tb" id="bNew">موديل وصل جديد ➕</button>
+      <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
+      <button class="tb" id="bMore">المزيد ⋯</button>
+    </div>
   </div>
-</div>
+</div></div>
 <div class="stage" id="stage">
   <div class="warnbar" id="warn"></div>
   <div class="pagewrap" id="wrap"></div>
@@ -285,7 +295,7 @@ function renderTabs() {
 function renderPage() {
   const tab = T(), L = layout(tab), wrap = $('#wrap');
   const avail = Math.max(240, $('#stage').clientWidth - 16);
-  const sc = Math.min(1.25, avail / (L.W * K));
+  const sc = Math.min(1, avail / (L.W * K));
   wrap.style.width = (L.W * K * sc) + 'px'; wrap.style.height = (L.H * K * sc) + 'px';
   wrap.innerHTML = pageHTML(tab, true);
   wrap.firstChild.style.transform = `scale(${sc})`;
