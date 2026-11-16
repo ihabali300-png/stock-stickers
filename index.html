@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>استيكرات ترتيب الستوك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{--bg:#eef0f3;--ink:#16181d;--mut:#6b7280;--line:#d9dde3;--acc:#0f766e;--acc2:#e6f4f2;--warn:#b45309;--danger:#b91c1c;--card:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px}
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;padding:8px 12px 4px}
+.brand h1{font-size:16px;margin:0;font-weight:800}
+.status{margin-inline-start:auto;font-size:12px;color:var(--mut);background:#f3f4f6;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.status.ok{color:var(--acc);background:var(--acc2)}
+.status.warn{color:var(--warn);background:#fef3c7}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 12px;font-size:14px;font-weight:600;direction:ltr}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tab.add{color:var(--acc);font-weight:800}
+.tools{display:flex;gap:6px;overflow-x:auto;padding:4px 10px 8px;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.tb{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-size:13px;font-weight:700;white-space:nowrap}
+.tb.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stage{padding:12px 8px 140px}
+.warnbar{max-width:900px;margin:0 auto 8px;background:#fef3c7;color:#7c2d12;border-radius:10px;padding:6px 12px;font-size:13px;display:none}
+.pagewrap{margin:0 auto;position:relative}
+.page{position:absolute;top:0;right:auto;left:0;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.12);transform-origin:0 0;direction:ltr;overflow:hidden}
+.cut{position:absolute;inset:0;pointer-events:none}
+.blk{position:absolute;border-collapse:collapse;table-layout:fixed;border:2px solid #000;background:#fff;cursor:pointer}
+.blk td{border:1.2px solid #000;padding:0;text-align:center;vertical-align:middle;overflow:hidden;font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1}
+.blk tr.hd td{border-bottom:2px solid #000}
+.blk.sel{outline:3px solid #14b8a6;outline-offset:3px}
+.blk tr.rsel td{background:#ccfbf1}
+.blk .noqr{color:#dc2626;font-family:Cairo;font-size:13px}
+.blk .ph{opacity:.25;font-size:26px}
+.blk img{display:block;margin:auto;object-fit:contain}
+.blk svg{display:block;margin:auto}
+.ghost{position:absolute;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-family:Cairo;font-size:14px;cursor:pointer}
+.hint{max-width:900px;margin:10px auto 0;text-align:center;color:var(--mut);font-size:13px}
+/* sheet */
+.sheet{position:fixed;inset:auto 0 0 0;z-index:40;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.18);max-height:72vh;overflow:auto;transform:translateY(105%);transition:transform .2s}
+.sheet.open{transform:none}
+.sheet .hdr{position:sticky;top:0;background:#fff;display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);z-index:2}
+.sheet .hdr b{font-size:15px}
+.x{margin-inline-start:auto;border:none;background:#f3f4f6;border-radius:99px;width:32px;height:32px;font-size:16px}
+.sb{padding:12px 14px 18px}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:3px;font-weight:600}
+.fld input[type=text],.fld input[type=number],.fld select,.fld textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.ltr{direction:ltr;text-align:left}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>.fld{flex:1;min-width:110px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-size:13.5px;font-weight:700}
+.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn.dan{color:var(--danger);border-color:#fecaca}
+.btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.grp{border-top:1px dashed var(--line);margin-top:12px;padding-top:12px}
+.grp h4{margin:0 0 8px;font-size:13px;color:var(--mut)}
+.thumb{width:84px;height:60px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa}
+.thumb img{max-width:100%;max-height:100%}
+.colrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.colrow select,.colrow input{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:14px}
+.colrow input{width:70px}
+.small{font-size:12px;color:var(--mut)}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.modal.open{display:flex}
+.mbox{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:8px 16px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+table.prev{border-collapse:collapse;font-size:12px;direction:ltr;width:100%}
+table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-space:nowrap}
+#printRoot{display:none}
+@media print{
+  body>*:not(#printRoot){display:none!important}
+  #printRoot{display:block}
+  #printRoot .page{position:relative;box-shadow:none;transform:none!important;page-break-after:always;break-after:page}
+  .blk.sel{outline:none}
+  .blk tr.rsel td{background:none}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><span id="status" class="status">جاري التحميل…</span></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="tools">
+    <button class="tb pri" id="bPdf">طباعة PDF 🖨️</button>
+    <button class="tb" id="bTab">التاب ده ⋮</button>
+    <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
+    <button class="tb" id="bImp">استيراد من الشيت 📥</button>
+    <button class="tb" id="bImgs">رفع صور بالجملة 🖼️</button>
+    <button class="tb" id="bNew">موديل وصل جديد R ➕</button>
+    <button class="tb" id="bBak">نسخة احتياطية 💾</button>
+  </div>
+</div>
+<div class="stage" id="stage">
+  <div class="warnbar" id="warn"></div>
+  <div class="pagewrap" id="wrap"></div>
+  <div class="hint">اضغط على أي مربع أو صف عشان تعدّله</div>
+</div>
+<div class="sheet" id="sheet"><div class="hdr"><b id="shT"></b><button class="x" id="shX">✕</button></div><div class="sb" id="shB"></div></div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fImg" accept="image/*" hidden>
+<input type="file" id="fImgs" accept="image/*" multiple hidden>
+<input type="file" id="fSheet" accept=".csv,.tsv,.txt,.xlsx,.xls" hidden>
+<input type="file" id="fJson" accept=".json,application/json" hidden>
+<div id="printRoot"></div>
+<style id="pageStyle"></style>
+
+<script>
+const K = 96/25.4, PT = 96/72, LS = 'stk_state_v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const ncmp = (a, b) => String(a).localeCompare(String(b), 'en', {numeric: true, sensitivity: 'base'});
+if (window.qrcode && qrcode.stringToBytesFuncs) qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+let S, cur = 0, sel = null, ART = null, DL = null, canPublish = true;
+
+/* ---------- model ---------- */
+function defTab(name) {
+  return {id: uid(), name: name || 'صفحة جديدة', orient: 'l', margin: 8, cols: 3, rows: 2, gapX: 12, gapY: 12,
+    colW: [24, 24, 24], colT: ['text', 'qr', 'image'], headH: 8, rowH: 21.5, headFs: 13, textFs: 15, pad: 1.8, cut: true, blocks: []};
+}
+function emptyBlock(tab, n) {
+  n = n ?? 3;
+  return {head: tab.colT.map(() => ''), late: false, hidden: false, items: Array.from({length: n}, () => ({t: tab.colT.map(() => '')}))};
+}
+function ensureBlocks(tab) { const need = tab.cols * tab.rows; while (tab.blocks.length < need) tab.blocks.push(emptyBlock(tab)); }
+function demo() {
+  const t = defTab('30S MEN');
+  const data = [['1', ['207', '234', '241']], ['2', ['247', '251', '277']], ['3', ['303', '410', '416']], ['4', ['408', '442', '502']], ['5', ['448', '516', '217'], true]];
+  t.blocks = data.map(([n, ms, late]) => ({head: ['30S', n, 'MEN'], late: !!late, hidden: false, items: ms.map(m => ({t: [m, '', '']}))}));
+  ensureBlocks(t);
+  return {v: 1, updated: 0, qrTpl: '{model}', tabs: [t], images: {}};
+}
+const T = () => S.tabs[cur];
+const textCol = tab => tab.colT.indexOf('text');
+const rowModel = (tab, it) => { const i = textCol(tab); return i < 0 ? '' : String(it.t[i] || '').trim(); };
+const lateIdx = tab => Math.min(1, tab.colT.length - 1);
+function headText(tab, b, c) { let s = b.head[c] || ''; if (b.late && c === lateIdx(tab)) s = (s + ' R').trim(); return s; }
+function skuFor(m) { if (!m || !S.skus) return ''; if (S.skus[m]) return S.skus[m]; const n = String(parseInt(m, 10)); return /^\d/.test(m) && S.skus[n] ? S.skus[n] : ''; }
+function qrValue(tab, it, c) { if (it.t[c]) return it.t[c]; const m = rowModel(tab, it); if (!m) return ''; const k = skuFor(m); if (k) return k; return S.qrTpl === '{model}' && S.skus && Object.keys(S.skus).length ? '' : S.qrTpl.replace(/\{model\}/g, m); }
+function findImg(key) { if (!key) return null; if (S.images[key]) return S.images[key]; const k = String(key).toLowerCase(); for (const n in S.images) if (n.toLowerCase() === k) return S.images[n]; return null; }
+function imgFor(tab, it, c) { return findImg(it.t[c]) || findImg(rowModel(tab, it)); }
+function blockEmpty(b) { return !b.head.some(x => String(x).trim()) && !b.items.some(it => it.t.some(x => String(x).trim())); }
+
+function layout(tab) {
+  const W = tab.orient === 'l' ? 297 : 210, H = tab.orient === 'l' ? 210 : 297;
+  const bw = tab.colW.reduce((a, b) => a + (+b || 0), 0);
+  const bh = b => tab.headH + b.items.length * tab.rowH;
+  const rowsH = [];
+  for (let r = 0; r < tab.rows; r++) { let m = 0; for (let c = 0; c < tab.cols; c++) { const b = tab.blocks[r * tab.cols + c]; if (b) m = Math.max(m, bh(b)); } rowsH.push(m); }
+  const totW = tab.cols * bw + (tab.cols - 1) * tab.gapX, totH = rowsH.reduce((a, b) => a + b, 0) + (tab.rows - 1) * tab.gapY;
+  const x0 = Math.max(tab.margin, (W - totW) / 2), y0 = Math.max(tab.margin, (H - totH) / 2);
+  const boxes = [];
+  for (let i = 0; i < tab.cols * tab.rows; i++) {
+    const c = i % tab.cols, r = Math.floor(i / tab.cols), b = tab.blocks[i];
+    let y = y0 + r * tab.gapY; for (let k = 0; k < r; k++) y += rowsH[k];
+    boxes.push({x: x0 + c * (bw + tab.gapX), y, w: bw, h: bh(b)});
+  }
+  const over = totW > W - 2 * tab.margin + 0.05 || totH > H - 2 * tab.margin + 0.05;
+  return {W, H, bw, boxes, over, totW, totH};
+}
+
+/* ---------- QR ---------- */
+const qrCache = new Map();
+function qrMods(text) {
+  if (!text || !window.qrcode) return null;
+  if (qrCache.has(text)) return qrCache.get(text);
+  let res = null;
+  try { const q = qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(); const g = []; for (let r = 0; r < n; r++) { const row = []; for (let c = 0; c < n; c++) row.push(q.isDark(r, c)); g.push(row); } res = {n, g}; } catch (e) { res = null; }
+  qrCache.set(text, res); return res;
+}
+function qrSvg(text, sizePx) {
+  const m = qrMods(text); if (!m) return '';
+  let d = '';
+  m.g.forEach((row, r) => { let c = 0; while (c < m.n) { if (row[c]) { let e = c; while (e < m.n && row[e]) e++; d += `M${c} ${r}h${e - c}v1h-${e - c}z`; c = e; } else c++; } });
+  return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 ${m.n} ${m.n}" shape-rendering="crispEdges"><path d="${d}" fill="#000"/></svg>`;
+}
+
+/* ---------- render ---------- */
+const px = v => (v * K).toFixed(2) + 'px';
+function cellHTML(tab, it, c, live) {
+  const t = tab.colT[c], w = tab.colW[c], h = tab.rowH, p = tab.pad;
+  if (t === 'text') return `<span style="font-size:${(tab.textFs * PT).toFixed(1)}px">${esc(it.t[c])}</span>`;
+  if (t === 'qr') { const s = Math.max(4, Math.min(w, h) - 2 * p), v = qrValue(tab, it, c); if (!v) return live && rowModel(tab, it) ? '<span class="noqr">QR؟</span>' : ''; return qrSvg(v, (s * K).toFixed(1)); }
+  if (t === 'image') { const im = imgFor(tab, it, c); if (im) return `<img src="${im.d}" style="max-width:${px(w - 2 * p)};max-height:${px(h - 2 * p)}">`; return live && rowModel(tab, it) ? '<span class="ph">🕶️</span>' : ''; }
+  return '';
+}
+function pageHTML(tab, live) {
+  ensureBlocks(tab);
+  const L = layout(tab);
+  let s = `<div class="page" style="width:${px(L.W)};height:${px(L.H)}">`;
+  if (tab.cut) {
+    const xs = new Set(), ys = new Set();
+    L.boxes.forEach((b, i) => { if (tab.blocks[i].hidden) return; xs.add(+b.x.toFixed(2)); xs.add(+(b.x + b.w).toFixed(2)); ys.add(+b.y.toFixed(2)); ys.add(+(b.y + b.h).toFixed(2)); });
+    const e = 3;
+    s += `<svg class="cut" viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="none">` +
+      [...xs].map(x => `<line x1="${x}" y1="${e}" x2="${x}" y2="${L.H - e}"/>`).join('') +
+      [...ys].map(y => `<line x1="${e}" y1="${y}" x2="${L.W - e}" y2="${y}"/>`).join('') +
+      `<style>line{stroke:#c8c8c8;stroke-width:.2}</style></svg>`;
+  }
+  L.boxes.forEach((bx, i) => {
+    const b = tab.blocks[i];
+    if (b.hidden) { if (live) s += `<div class="ghost" data-b="${i}" style="left:${px(bx.x)};top:${px(bx.y)};width:${px(bx.w)};height:${px(bx.h)}">مربع مخفي — اضغط لإظهاره</div>`; return; }
+    const isSel = live && sel && sel.b === i;
+    s += `<table class="blk ${isSel ? 'sel' : ''}" data-b="${i}" style="left:${px(bx.x)};top:${px(bx.y)};width:${px(L.bw)}"><colgroup>` +
+      tab.colW.map(w => `<col style="width:${px(w)}">`).join('') + '</colgroup>';
+    s += `<tr class="hd ${isSel && sel.r === -1 ? 'rsel' : ''}" data-r="-1" style="height:${px(tab.headH)}">` +
+      tab.colT.map((t, c) => `<td style="font-size:${(tab.headFs * PT).toFixed(1)}px">${esc(headText(tab, b, c))}</td>`).join('') + '</tr>';
+    b.items.forEach((it, r) => {
+      s += `<tr data-r="${r}" class="${isSel && sel.r === r ? 'rsel' : ''}" style="height:${px(tab.rowH)}">` + tab.colT.map((t, c) => `<td>${cellHTML(tab, it, c, live)}</td>`).join('') + '</tr>';
+    });
+    s += '</table>';
+  });
+  return s + '</div>';
+}
+function renderTabs() {
+  $('#tabs').innerHTML = S.tabs.map((t, i) => `<button class="tab ${i === cur ? 'on' : ''}" data-i="${i}">${esc(t.name)}</button>`).join('') + '<button class="tab add" data-add="1">＋ تاب</button>';
+}
+function renderPage() {
+  const tab = T(), L = layout(tab), wrap = $('#wrap');
+  const avail = Math.max(240, $('#stage').clientWidth - 16);
+  const sc = Math.min(1.25, avail / (L.W * K));
+  wrap.style.width = (L.W * K * sc) + 'px'; wrap.style.height = (L.H * K * sc) + 'px';
+  wrap.innerHTML = pageHTML(tab, true);
+  wrap.firstChild.style.transform = `scale(${sc})`;
+  const w = $('#warn');
+  if (L.over) { w.style.display = 'block'; w.textContent = `تنبيه: المربعات أكبر من مساحة الورقة (${L.totW.toFixed(0)}×${L.totH.toFixed(0)} مم) — صغّر المقاسات أو قلّل الصفوف`; } else w.style.display = 'none';
+}
+let rT = 0;
+function render(now) { clearTimeout(rT); if (now) { renderTabs(); renderPage(); } else rT = setTimeout(() => { renderTabs(); renderPage(); }, 60); }
+window.addEventListener('resize', () => render());
+
+/* ---------- save ---------- */
+let sT = 0;
+function setStatus(txt, cls) { const s = $('#status'); s.textContent = txt; s.className = 'status ' + (cls || ''); }
+function changed(rerender = true) {
+  S.updated = Date.now();
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+  if (rerender) render();
+  if (ART && canPublish) { setStatus('هيتحفظ حالًا…'); clearTimeout(sT); sT = setTimeout(publishNow, 3500); }
+  else setStatus('محفوظ على الجهاز بس', 'warn');
+}
+async function publishNow() {
+  if (!ART || !canPublish) return;
+  setStatus('جاري الحفظ…');
+  try { await ART.publish({'data/state.json': JSON.stringify(S)}); setStatus('محفوظ ✓', 'ok'); }
+  catch (e) {
+    const c = e && e.code;
+    if (c === 'conflict') { setStatus('اتحدّث من جهاز تاني', 'warn'); return; }
+    if (c === 'rate_limited' || c === 'upstream_error') { setStatus('هيعيد الحفظ…', 'warn'); clearTimeout(sT); sT = setTimeout(publishNow, 8000); return; }
+    canPublish = false; setStatus('محفوظ على الجهاز بس', 'warn');
+  }
+}
+
+/* ---------- ui helpers ---------- */
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2600); }
+function modal(html) { $('#mbox').innerHTML = html; $('#modal').classList.add('open'); return $('#mbox'); }
+function closeModal() { $('#modal').classList.remove('open'); }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+function ask(msg, yes = 'تمام', danger) {
+  return new Promise(res => {
+    const m = modal(`<div class="sb"><p style="margin:4px 0 16px;font-size:15px">${msg}</p><div class="row"><button class="btn ${danger ? 'dan' : 'pri'}" id="aY">${yes}</button><button class="btn" id="aN">إلغاء</button></div></div>`);
+    m.querySelector('#aY').onclick = () => { closeModal(); res(true); };
+    m.querySelector('#aN').onclick = () => { closeModal(); res(false); };
+  });
+}
+function askText(title, val) {
+  return new Promise(res => {
+    const m = modal(`<div class="sb"><div class="fld"><label>${title}</label><input type="text" id="aT" class="ltr" value="${esc(val)}"></div><div class="row"><button class="btn pri" id="aY">حفظ</button><button class="btn" id="aN">إلغاء</button></div></div>`);
+    const i = m.querySelector('#aT'); setTimeout(() => i.focus(), 50);
+    m.querySelector('#aY').onclick = () => { closeModal(); res(i.value.trim()); };
+    m.querySelector('#aN').onclick = () => { closeModal(); res(null); };
+  });
+}
+function openSheet(title, html) { $('#shT').textContent = title; $('#shB').innerHTML = html; $('#sheet').classList.add('open'); return $('#shB'); }
+function closeSheet() { $('#sheet').classList.remove('open'); if (sel) { sel = null; render(true); } }
+$('#shX').onclick = closeSheet;
+
+/* ---------- tabs ---------- */
+$('#tabs').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.add) { const n = await askText('اسم التاب الجديد', 'صفحة ' + (S.tabs.length + 1)); if (n == null) return; const t = JSON.parse(JSON.stringify(T())); t.id = uid(); t.name = n || 'صفحة'; t.blocks = []; ensureBlocks(t); S.tabs.push(t); cur = S.tabs.length - 1; sel = null; changed(); return; }
+  const i = +b.dataset.i; if (i === cur) { tabMenu(); return; }
+  cur = i; sel = null; $('#sheet').classList.remove('open'); render(true);
+});
+$('#bTab').onclick = tabMenu;
+function tabMenu() {
+  const m = modal(`<div class="sb"><b style="direction:ltr;display:block;text-align:right;margin-bottom:10px">${esc(T().name)}</b>
+  <div class="row" style="flex-direction:column;align-items:stretch">
+  <button class="btn" data-a="ren">تغيير اسم التاب ✏️</button>
+  <button class="btn" data-a="dup">نسخ التاب ده 📄</button>
+  <button class="btn" data-a="sortall">إعادة ترتيب الكل تصاعدي ↕️</button>
+  <button class="btn" data-a="left">نقل التاب يمين ➡️</button>
+  <button class="btn" data-a="right">نقل التاب شمال ⬅️</button>
+  <button class="btn dan" data-a="del">حذف التاب 🗑️</button>
+  <button class="btn" data-a="x">إغلاق</button></div></div>`);
+  m.onclick = async e => {
+    const a = e.target.dataset.a; if (!a) return; closeModal();
+    if (a === 'ren') { const n = await askText('اسم التاب', T().name); if (n) { T().name = n; changed(); } }
+    if (a === 'dup') { const t = JSON.parse(JSON.stringify(T())); t.id = uid(); t.name += ' (نسخة)'; S.tabs.splice(cur + 1, 0, t); cur++; changed(); }
+    if (a === 'sortall') { if (await ask('هرتّب كل الموديلات في الصفحة دي تصاعدي من أول مربع لآخر مربع، وهشيل علامة R. تمام؟')) { sortAll(T()); changed(); toast('اترتّبت ✓'); } }
+    if (a === 'left' && cur > 0) { [S.tabs[cur - 1], S.tabs[cur]] = [S.tabs[cur], S.tabs[cur - 1]]; cur--; changed(); }
+    if (a === 'right' && cur < S.tabs.length - 1) { [S.tabs[cur + 1], S.tabs[cur]] = [S.tabs[cur], S.tabs[cur + 1]]; cur++; changed(); }
+    if (a === 'del') { if (S.tabs.length === 1) { toast('لازم يفضل تاب واحد على الأقل'); return; } if (await ask(`حذف التاب «${esc(T().name)}» نهائيًا؟`, 'حذف', true)) { S.tabs.splice(cur, 1); cur = Math.max(0, cur - 1); sel = null; changed(); } }
+  };
+}
+function sortAll(tab) {
+  const tc = textCol(tab); if (tc < 0) return;
+  const vis = tab.blocks.filter(b => !b.hidden);
+  const items = []; vis.forEach(b => b.items.forEach(it => { if (rowModel(tab, it)) items.push(it); }));
+  items.sort((a, b) => ncmp(rowModel(tab, a), rowModel(tab, b)));
+  let k = 0;
+  vis.forEach(b => { b.late = false; b.items = b.items.map(() => items[k] ? items[k++] : {t: tab.colT.map(() => '')}); });
+  while (k < items.length) { const nb = emptyBlock(tab, 0); const ref = vis[vis.length - 1]; nb.head = ref ? [...ref.head] : nb.head; const n = ref ? ref.items.length : 3; for (let j = 0; j < n; j++) nb.items.push(items[k] ? items[k++] : {t: tab.colT.map(() => '')}); tab.blocks.push(nb); tab.rows = Math.ceil(tab.blocks.length / tab.cols); }
+}
+
+/* ---------- block / row editor ---------- */
+$('#wrap').addEventListener('click', e => {
+  const g = e.target.closest('.ghost');
+  if (g) { const b = T().blocks[+g.dataset.b]; b.hidden = false; changed(); return; }
+  const tb = e.target.closest('table.blk'); if (!tb) return;
+  const tr = e.target.closest('tr');
+  sel = {b: +tb.dataset.b, r: tr ? +tr.dataset.r : -1};
+  render(true); openEditor();
+});
+function openEditor() {
+  const tab = T(), b = tab.blocks[sel.b]; if (!b) return;
+  const isHead = sel.r < 0;
+  let h = '';
+  if (isHead) {
+    h += '<div class="row">' + tab.colT.map((t, c) => `<div class="fld"><label>خانة ${c + 1} في الهيدر</label><input type="text" class="ltr" data-h="${c}" value="${esc(b.head[c])}"></div>`).join('') + '</div>';
+    h += `<div class="row"><button class="btn ${b.late ? 'on' : ''}" data-a="late">علامة R (وصل بعد الترتيب) ${b.late ? '✓' : ''}</button></div>`;
+  } else {
+    const it = b.items[sel.r], m = rowModel(tab, it);
+    tab.colT.forEach((t, c) => {
+      if (t === 'text') h += `<div class="fld"><label>${c === textCol(tab) ? 'رقم الموديل' : 'نص خانة ' + (c + 1)}</label><input type="text" class="ltr" data-t="${c}" value="${esc(it.t[c])}" ${c === textCol(tab) ? 'inputmode="text" autocomplete="off"' : ''}></div>`;
+      if (t === 'qr') h += `<div class="fld"><label>محتوى QR (فاضي = تلقائي من كود الـSKU المحفوظ للموديل)</label><input type="text" class="ltr" data-t="${c}" value="${esc(it.t[c])}" placeholder="${esc(qrValue(tab, {t: it.t.map((x, i) => i === c ? '' : x)}, c) || 'مفيش كود محفوظ — اكتبه هنا')}"></div>`;
+      if (t === 'image') { const im = imgFor(tab, it, c); h += `<div class="fld"><label>صورة الموديل</label><div class="row"><div class="thumb">${im ? `<img src="${im.d}">` : '<span class="small">مفيش صورة</span>'}</div><button class="btn" data-a="img" data-c="${c}">رفع صورة 📷</button>${im ? `<button class="btn dan" data-a="rmimg" data-c="${c}">حذف الصورة</button>` : ''}</div><div class="small" style="margin-top:4px">الصورة بتتربط برقم الموديل، فلو الموديل اتكرر هتظهر تلقائي</div></div>`; }
+    });
+    h += `<div class="row"><button class="btn" data-a="prev">⬆️ الصف اللي فوق</button><button class="btn pri" data-a="next">الصف اللي بعده ⬇️</button></div>`;
+    h += `<div class="grp"><h4>الصف ده</h4><div class="row"><button class="btn" data-a="up">تحريك لفوق</button><button class="btn" data-a="down">تحريك لتحت</button><button class="btn" data-a="insBelow">إضافة صف تحته ➕</button><button class="btn dan" data-a="delRow">حذف الصف 🗑️</button></div></div>`;
+  }
+  h += `<div class="grp"><h4>المربع كله</h4><div class="row">
+    <button class="btn" data-a="addRow">إضافة صف ➕</button>
+    <button class="btn" data-a="sort">ترتيب تصاعدي ↕️</button>
+    ${isHead ? '' : `<button class="btn ${b.late ? 'on' : ''}" data-a="late">علامة R ${b.late ? '✓' : ''}</button>`}
+    <button class="btn" data-a="hide">إخفاء المربع 👁️</button>
+    <button class="btn dan" data-a="clear">تفريغ المربع 🧹</button></div></div>`;
+  const body = openSheet(isHead ? `هيدر المربع رقم ${sel.b + 1}` : `مربع ${sel.b + 1} — صف ${sel.r + 1}`, h);
+  body.oninput = e => {
+    const el = e.target;
+    if (el.dataset.h != null) { b.head[+el.dataset.h] = el.value; changed(); }
+    if (el.dataset.t != null) { const c = +el.dataset.t, it = b.items[sel.r]; it.t[c] = el.value; if (tab.colT[c] === 'qr' && el.value.trim() && rowModel(tab, it)) { S.skus[rowModel(tab, it)] = el.value.trim(); it.t[c] = ''; } changed(); }
+  };
+  body.onclick = async e => {
+    const btn = e.target.closest('[data-a]'); if (!btn) return; const a = btn.dataset.a;
+    if (a === 'late') { b.late = !b.late; changed(); openEditor(); }
+    if (a === 'next' || a === 'prev') { moveSel(a === 'next' ? 1 : -1); }
+    if (a === 'up' && sel.r > 0) { [b.items[sel.r - 1], b.items[sel.r]] = [b.items[sel.r], b.items[sel.r - 1]]; sel.r--; changed(); openEditor(); }
+    if (a === 'down' && sel.r < b.items.length - 1) { [b.items[sel.r + 1], b.items[sel.r]] = [b.items[sel.r], b.items[sel.r + 1]]; sel.r++; changed(); openEditor(); }
+    if (a === 'insBelow') { b.items.splice(sel.r + 1, 0, {t: tab.colT.map(() => '')}); sel.r++; changed(); openEditor(); }
+    if (a === 'delRow') { if (b.items.length <= 1) { toast('المربع لازم فيه صف واحد على الأقل'); return; } b.items.splice(sel.r, 1); sel.r = Math.min(sel.r, b.items.length - 1); changed(); openEditor(); }
+    if (a === 'addRow') { b.items.push({t: tab.colT.map(() => '')}); sel.r = b.items.length - 1; changed(); openEditor(); }
+    if (a === 'sort') { b.items.sort((x, y) => { const mx = rowModel(tab, x), my = rowModel(tab, y); if (!mx) return 1; if (!my) return -1; return ncmp(mx, my); }); changed(); toast('اترتّب ✓'); openEditor(); }
+    if (a === 'hide') { b.hidden = true; changed(); closeSheet(); }
+    if (a === 'clear') { if (await ask('تفريغ كل محتوى المربع ده؟', 'تفريغ', true)) { const n = b.items.length; Object.assign(b, emptyBlock(tab, n)); changed(); openEditor(); } }
+    if (a === 'img') { pickImg(+btn.dataset.c); }
+    if (a === 'rmimg') { const it = b.items[sel.r], c = +btn.dataset.c; if (it.t[c]) it.t[c] = ''; else delete S.images[findKey(rowModel(tab, it))]; changed(); openEditor(); }
+  };
+  if (!isHead) { const f = body.querySelector(`[data-t="${textCol(tab)}"]`); if (f && !f.value) setTimeout(() => f.focus(), 120); }
+}
+function findKey(k) { if (S.images[k]) return k; const l = String(k).toLowerCase(); return Object.keys(S.images).find(n => n.toLowerCase() === l) || k; }
+function moveSel(d) {
+  const tab = T(); let {b, r} = sel; r += d;
+  while (true) {
+    const blk = tab.blocks[b];
+    if (r >= 0 && r < blk.items.length && !blk.hidden) break;
+    if (r < 0) { b--; if (b < 0) { b = 0; r = 0; break; } r = tab.blocks[b].items.length - 1; }
+    else { b++; if (b >= tab.blocks.length) { b = tab.blocks.length - 1; r = tab.blocks[b].items.length - 1; break; } r = 0; }
+  }
+  sel = {b, r}; render(true); openEditor();
+}
+
+/* ---------- images ---------- */
+function loadImgEl(file) { return new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => res({im, u}); im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('img')); }; im.src = u; }); }
+async function fileToImg(file) {
+  const {im, u} = await loadImgEl(file);
+  let w = im.naturalWidth, h = im.naturalHeight; const s0 = Math.min(1, 700 / Math.max(w, h)); w = Math.round(w * s0); h = Math.round(h * s0);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(im, 0, 0, w, h); URL.revokeObjectURL(u);
+  // trim white margins
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  try { const d = x.getImageData(0, 0, w, h).data; for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) { const i = (yy * w + xx) * 4; if (d[i] < 238 || d[i + 1] < 238 || d[i + 2] < 238) { if (xx < minX) minX = xx; if (xx > maxX) maxX = xx; if (yy < minY) minY = yy; if (yy > maxY) maxY = yy; } } } catch (e) {}
+  if (maxX < 0) { minX = 0; minY = 0; maxX = w - 1; maxY = h - 1; }
+  const pad = 4; minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad); maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
+  const cw = maxX - minX + 1, ch = maxY - minY + 1, s1 = Math.min(1, 380 / Math.max(cw, ch));
+  const o = document.createElement('canvas'); o.width = Math.round(cw * s1); o.height = Math.round(ch * s1);
+  const ox = o.getContext('2d'); ox.fillStyle = '#fff'; ox.fillRect(0, 0, o.width, o.height); ox.drawImage(cv, minX, minY, cw, ch, 0, 0, o.width, o.height);
+  return {d: o.toDataURL('image/jpeg', 0.85), w: o.width, h: o.height};
+}
+let imgCol = 0;
+function pickImg(c) { imgCol = c; $('#fImg').value = ''; $('#fImg').click(); }
+$('#fImg').onchange = async e => {
+  const f = e.target.files[0]; if (!f || !sel) return;
+  try {
+    const tab = T(), it = tab.blocks[sel.b].items[sel.r], m = rowModel(tab, it), img = await fileToImg(f);
+    if (m) { S.images[m] = img; it.t[imgCol] = ''; } else { const k = 'img_' + uid(); S.images[k] = img; it.t[imgCol] = k; }
+    changed(); openEditor(); toast('الصورة اتضافت ✓');
+  } catch (er) { toast('مقدرتش أقرا الصورة دي'); }
+};
+$('#bImgs').onclick = () => {
+  const m = modal(`<div class="sb"><b>رفع صور بالجملة</b><p class="small" style="font-size:13.5px">سمّي كل صورة برقم الموديل (مثلًا <span class="ltr" style="display:inline-block">207.jpg</span>) واختارهم كلهم مرة واحدة — كل صورة هتتحط جنب الموديل بتاعها في كل التابات تلقائي، والفراغ الأبيض حواليها هيتقص.</p><div class="row"><button class="btn pri" id="iGo">اختيار الصور 🖼️</button><button class="btn" id="iX">إلغاء</button></div><div id="iP" class="small" style="margin-top:10px"></div></div>`);
+  m.querySelector('#iX').onclick = closeModal;
+  m.querySelector('#iGo').onclick = () => { $('#fImgs').value = ''; $('#fImgs').click(); };
+};
+$('#fImgs').onchange = async e => {
+  const files = [...e.target.files]; if (!files.length) return;
+  const p = $('#iP'); let ok = 0;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], key = f.name.replace(/\.[^.]+$/, '').trim();
+    if (p) p.textContent = `جاري التجهيز ${i + 1} من ${files.length}…`;
+    try { S.images[key] = await fileToImg(f); ok++; } catch (er) {}
+  }
+  closeModal(); changed(); toast(`اتضاف ${ok} صورة ✓`);
+};
+
+/* ---------- page settings ---------- */
+$('#bSet').onclick = openSettings;
+function openSettings() {
+  const t = T();
+  const num = (k, lab, step = 0.5, min = 0) => `<div class="fld"><label>${lab}</label><input type="number" step="${step}" min="${min}" data-n="${k}" value="${t[k]}"></div>`;
+  let h = `<div class="row"><div class="fld"><label>اتجاه الورقة</label><select data-s="orient"><option value="l" ${t.orient === 'l' ? 'selected' : ''}>عرضي (Landscape)</option><option value="p" ${t.orient === 'p' ? 'selected' : ''}>طولي (Portrait)</option></select></div>${num('cols', 'عدد المربعات بالعرض', 1, 1)}${num('rows', 'عدد المربعات بالطول', 1, 1)}</div>`;
+  h += `<div class="row">${num('gapX', 'المسافة بين المربعات أفقي (مم)')}${num('gapY', 'المسافة بين المربعات رأسي (مم)')}${num('margin', 'هامش الورقة (مم)')}</div>`;
+  h += `<div class="row">${num('headH', 'ارتفاع الهيدر (مم)')}${num('rowH', 'ارتفاع الصف (مم)')}${num('pad', 'هامش جوه الخانة (مم)', 0.2)}</div>`;
+  h += `<div class="row">${num('headFs', 'حجم خط الهيدر', 0.5, 5)}${num('textFs', 'حجم خط الموديل', 0.5, 5)}</div>`;
+  h += `<div class="fld"><label><input type="checkbox" data-c="cut" ${t.cut ? 'checked' : ''}> خطوط القص الخفيفة بين المربعات</label></div>`;
+  h += `<div class="grp"><h4>أعمدة المربع (بالترتيب من الشمال لليمين في الورقة)</h4>` + t.colT.map((ty, c) => `<div class="colrow"><b style="width:22px">${c + 1}</b><select data-ct="${c}"><option value="text" ${ty === 'text' ? 'selected' : ''}>نص / رقم الموديل</option><option value="qr" ${ty === 'qr' ? 'selected' : ''}>كود QR</option><option value="image" ${ty === 'image' ? 'selected' : ''}>صورة</option></select><span class="small">عرض</span><input type="number" step="0.5" min="5" data-cw="${c}" value="${t.colW[c]}"><span class="small">مم</span><button class="btn dan" data-dc="${c}" style="padding:4px 9px">✕</button></div>`).join('') +
+    `<div class="row"><button class="btn" data-a="addcol">إضافة عمود ➕</button><button class="btn" data-a="allrows">إضافة صف لكل المربعات ➕</button><button class="btn" data-a="delrows">حذف آخر صف من كل المربعات ➖</button></div></div>`;
+  h += `<div class="grp"><h4>كود QR (لكل التابات)</h4><div class="fld"><label>شكل محتوى الـQR — اكتب {model} مكان رقم الموديل</label><input type="text" class="ltr" data-q="1" value="${esc(S.qrTpl)}"></div></div>`;
+  const body = openSheet('إعدادات الصفحة — ' + t.name, h);
+  body.onchange = async e => {
+    const el = e.target;
+    if (el.dataset.n) {
+      let v = parseFloat(el.value); if (isNaN(v)) return; const k = el.dataset.n;
+      if (k === 'cols' || k === 'rows') {
+        v = Math.max(1, Math.round(v)); const nc = k === 'cols' ? v : t.cols, nr = k === 'rows' ? v : t.rows;
+        if (k === 'cols' && v !== t.cols) { // re-flow keeping order
+          const need = nc * nr, lost = t.blocks.slice(need).filter(b => !blockEmpty(b)).length;
+          if (lost && !(await ask(`فيه ${lost} مربع فيهم بيانات هيتشالوا. نكمّل؟`, 'نكمّل', true))) { el.value = t[k]; return; }
+          t.cols = nc; t.blocks = t.blocks.slice(0, need);
+        } else if (k === 'rows' && v !== t.rows) {
+          const need = nc * nr, lost = t.blocks.slice(need).filter(b => !blockEmpty(b)).length;
+          if (lost && !(await ask(`فيه ${lost} مربع فيهم بيانات هيتشالوا. نكمّل؟`, 'نكمّل', true))) { el.value = t[k]; return; }
+          t.rows = nr; t.blocks = t.blocks.slice(0, need);
+        }
+        ensureBlocks(t); sel = null;
+      } else t[k] = v;
+      changed();
+    }
+    if (el.dataset.s) { t.orient = el.value; changed(); }
+    if (el.dataset.c) { t.cut = el.checked; changed(); }
+    if (el.dataset.ct != null) { t.colT[+el.dataset.ct] = el.value; changed(); }
+    if (el.dataset.cw != null) { const v = parseFloat(el.value); if (v > 0) { t.colW[+el.dataset.cw] = v; changed(); } }
+    if (el.dataset.q) { S.qrTpl = el.value || '{model}'; qrCache.clear(); changed(); }
+  };
+  body.onclick = async e => {
+    const el = e.target;
+    if (el.dataset.dc != null) {
+      if (t.colT.length <= 1) return toast('لازم يفضل عمود واحد');
+      if (!(await ask(`حذف العمود رقم ${+el.dataset.dc + 1} من كل المربعات؟`, 'حذف', true))) return;
+      const c = +el.dataset.dc; t.colT.splice(c, 1); t.colW.splice(c, 1); t.blocks.forEach(b => { b.head.splice(c, 1); b.items.forEach(it => it.t.splice(c, 1)); }); changed(); openSettings();
+    }
+    if (el.dataset.a === 'addcol') { t.colT.push('text'); t.colW.push(20); t.blocks.forEach(b => { b.head.push(''); b.items.forEach(it => it.t.push('')); }); changed(); openSettings(); }
+    if (el.dataset.a === 'allrows') { t.blocks.forEach(b => b.items.push({t: t.colT.map(() => '')})); changed(); toast('اتضاف صف ✓'); }
+    if (el.dataset.a === 'delrows') { t.blocks.forEach(b => { if (b.items.length > 1) b.items.pop(); }); changed(); toast('اتشال صف ✓'); }
+  };
+}
+
+/* ---------- new arrival (R) ---------- */
+$('#bNew').onclick = async () => {
+  const tab = T(), tc = textCol(tab); if (tc < 0) return toast('مفيش عمود نص للموديل');
+  const m = await askText('رقم الموديل اللي وصل جديد', ''); if (!m) return;
+  for (let i = 0; i < tab.blocks.length; i++) {
+    const b = tab.blocks[i]; if (b.hidden) continue;
+    const r = b.items.findIndex(it => !rowModel(tab, it));
+    if (r >= 0) {
+      b.items[r].t[tc] = m;
+      if (!b.head.some(x => String(x).trim())) { const ref = tab.blocks.slice(0, i).reverse().find(x => !x.hidden && x.head.some(y => String(y).trim())); if (ref) { b.head = [...ref.head]; const li = lateIdx(tab); const n = parseInt(ref.head[li]); if (!isNaN(n)) b.head[li] = String(n + 1); } }
+      b.late = true; sel = {b: i, r}; changed(); render(true); openEditor(); toast(`اتحط في مربع ${i + 1} بعلامة R`); return;
+    }
+  }
+  toast('مفيش مكان فاضي في الصفحة — زوّد صف أو مربعات من الإعدادات');
+};
+
+/* ---------- import ---------- */
+function parseDelim(text) {
+  const d = text.indexOf('\t') >= 0 ? '\t' : (text.split('\n')[0].split(';').length > text.split('\n')[0].split(',').length ? ';' : ',');
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+    else if (ch === '"' && f === '') q = true;
+    else if (ch === d) { row.push(f); f = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += ch;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim()));
+}
+function loadScript(src) { return new Promise((res, rej) => { if ([...document.scripts].some(s => s.src === src)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+let IMP = null;
+$('#bImp').onclick = () => {
+  const m = modal(`<div class="sb"><b>استيراد من جوجل شيت</b>
+   <p class="small" style="font-size:13.5px">انسخ الجدول من الشيت (مع صف العناوين) والصقه هنا، أو ارفع ملف CSV / Excel (من جوجل شيت: ملف ← تنزيل).</p>
+   <div class="fld"><textarea id="impT" rows="5" class="ltr" placeholder="Collection	Gender	Model	..."></textarea></div>
+   <div class="row"><button class="btn" id="impF">رفع ملف 📄</button><button class="btn pri" id="impGo">التالي</button><button class="btn" id="impX">إلغاء</button></div></div>`);
+  m.querySelector('#impX').onclick = closeModal;
+  m.querySelector('#impF').onclick = () => { $('#fSheet').value = ''; $('#fSheet').click(); };
+  m.querySelector('#impGo').onclick = () => { const r = parseDelim(m.querySelector('#impT').value); if (r.length < 2) return toast('محتاج صف عناوين + بيانات'); mapStep(r); };
+};
+$('#fSheet').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    let rows;
+    if (/\.xlsx?$/i.test(f.name)) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      const wb = XLSX.read(await f.arrayBuffer(), {type: 'array'});
+      if (wb.SheetNames.length > 1) {
+        const name = await new Promise(res => { const m = modal(`<div class="sb"><b>اختار الشيت</b><div class="row" style="margin-top:10px;flex-direction:column;align-items:stretch">${wb.SheetNames.map(n => `<button class="btn" data-n="${esc(n)}" style="direction:ltr">${esc(n)}</button>`).join('')}</div></div>`); m.onclick = ev => { const n = ev.target.dataset.n; if (n) { res(n); } }; });
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {header: 1, raw: false, defval: ''});
+      } else rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, raw: false, defval: ''});
+      rows = rows.filter(r => r.some(c => String(c).trim()));
+    } else rows = parseDelim(await f.text());
+    if (rows.length < 2) return toast('الملف فاضي');
+    mapStep(rows);
+  } catch (er) { toast('مقدرتش أقرا الملف'); }
+};
+function guess(heads, words) { const i = heads.findIndex(h => words.some(w => String(h).toLowerCase().includes(w))); return i; }
+function mapStep(rows) {
+  const heads = rows[0].map(String), data = rows.slice(1);
+  IMP = {heads, data};
+  const opt = (sel) => `<option value="-1">— مش موجود —</option>` + heads.map((h, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(h || ('عمود ' + (i + 1)))}</option>`).join('');
+  const gC = guess(heads, ['collection', 'كولكشن', 'كوليكشن', 'brand', 'براند', 'line']);
+  const gG = guess(heads, ['gender', 'جنس', 'النوع', 'نوع', 'sex', 'category']);
+  const gM = guess(heads, ['model', 'موديل', 'sku', 'code', 'كود', 'style']);
+  const gQ = guess(heads, ['qr', 'barcode', 'باركود', 'url', 'link', 'لينك']);
+  const t = T();
+  const prev = `<table class="prev"><tr>${heads.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${data.slice(0, 4).map(r => `<tr>${heads.map((_, i) => `<td>${esc(r[i])}</td>`).join('')}</tr>`).join('')}</table>`;
+  const m = modal(`<div class="sb"><b>ربط الأعمدة</b> <span class="small">(${data.length} صف)</span>
+   <div style="overflow:auto;margin:8px 0">${prev}</div>
+   <div class="row"><div class="fld"><label>الكولكشن (BLC / 30S / OC)</label><select id="mC">${opt(gC)}</select></div><div class="fld"><label>النوع (MEN / WOMEN / UNISEX)</label><select id="mG">${opt(gG)}</select></div></div>
+   <div class="row"><div class="fld"><label>رقم الموديل</label><select id="mM">${opt(gM)}</select></div><div class="fld"><label>محتوى الـQR (اختياري)</label><select id="mQ">${opt(gQ)}</select></div></div>
+   <div class="row"><div class="fld"><label>عدد الموديلات في المربع</label><input type="number" id="mN" min="1" value="${t.blocks[0] ? t.blocks[0].items.length : 3}"></div><div class="fld"><label>شكل الصفحة</label><input type="text" disabled value="نفس إعدادات التاب الحالي (${t.cols}×${t.rows})"></div></div>
+   <div class="fld"><label><input type="checkbox" id="mR" checked> استبدال كل التابات الحالية (لو شلتها هتتضاف تابات جديدة)</label></div>
+   <p class="small">هيتعمل تاب لكل كولكشن + نوع، مترتّب تصاعدي، ولو الموديلات أكتر من صفحة هيتعمل أكتر من تاب.</p>
+   <div class="row"><button class="btn pri" id="mGo">إنشاء الصفحات ✨</button><button class="btn" id="mX">إلغاء</button></div></div>`);
+  m.querySelector('#mX').onclick = closeModal;
+  m.querySelector('#mGo').onclick = async () => {
+    const ci = +m.querySelector('#mC').value, gi = +m.querySelector('#mG').value, mi = +m.querySelector('#mM').value, qi = +m.querySelector('#mQ').value;
+    const per = Math.max(1, parseInt(m.querySelector('#mN').value) || 3), replace = m.querySelector('#mR').checked;
+    if (mi < 0) return toast('لازم تختار عمود رقم الموديل');
+    if (replace && !(await ask('هيتمسح كل اللي في التابات الحالية ويتعمل جديد من الشيت. تمام؟', 'تمام', true))) return;
+    const tabs = buildFromRows(IMP.data, ci, gi, mi, qi, per, T());
+    if (!tabs.length) return toast('مفيش موديلات');
+    if (replace) { S.tabs = tabs; cur = 0; } else { S.tabs.push(...tabs); cur = S.tabs.length - tabs.length; }
+    sel = null; closeModal(); changed(); toast(`اتعمل ${tabs.length} تاب ✓`);
+  };
+}
+function buildFromRows(data, ci, gi, mi, qi, per, tpl) {
+  const groups = new Map();
+  data.forEach(r => {
+    const model = String(r[mi] ?? '').trim(); if (!model) return;
+    const col = ci >= 0 ? String(r[ci] ?? '').trim() : '', gen = gi >= 0 ? String(r[gi] ?? '').trim() : '';
+    const k = col + '\u0001' + gen; if (!groups.has(k)) groups.set(k, {col, gen, items: []});
+    groups.get(k).items.push({model, qr: qi >= 0 ? String(r[qi] ?? '').trim() : ''});
+  });
+  const keys = [...groups.keys()].sort((a, b) => ncmp(a, b));
+  const out = [];
+  keys.forEach(k => {
+    const g = groups.get(k); g.items.sort((a, b) => ncmp(a.model, b.model));
+    const blocks = []; for (let i = 0; i < g.items.length; i += per) blocks.push(g.items.slice(i, i + per));
+    const perPage = tpl.cols * tpl.rows, pages = Math.ceil(blocks.length / perPage);
+    for (let p = 0; p < pages; p++) {
+      const t = JSON.parse(JSON.stringify(tpl)); t.id = uid();
+      t.name = [g.col, g.gen].filter(Boolean).join(' ') + (pages > 1 ? ` (${p + 1})` : '') || 'صفحة';
+      const tc = textCol(t), qc = t.colT.indexOf('qr');
+      t.blocks = blocks.slice(p * perPage, (p + 1) * perPage).map((items, j) => {
+        const b = emptyBlock(t, 0);
+        b.head = t.colT.map((_, c) => c === 0 ? g.col : c === lateIdx(t) ? String(p * perPage + j + 1) : c === t.colT.length - 1 ? g.gen : '');
+        if (t.colT.length === 2) b.head = [g.col + ' ' + (p * perPage + j + 1), g.gen];
+        items.forEach(x => { const it = {t: t.colT.map(() => '')}; if (tc >= 0) it.t[tc] = x.model; if (qc >= 0 && x.qr) it.t[qc] = x.qr; b.items.push(it); });
+        while (b.items.length < per) b.items.push({t: t.colT.map(() => '')});
+        return b;
+      });
+      ensureBlocks(t); t.blocks.forEach(b => { while (b.items.length < per) b.items.push({t: t.colT.map(() => '')}); });
+      out.push(t);
+    }
+  });
+  return out;
+}
+
+/* ---------- backup ---------- */
+$('#bBak').onclick = () => {
+  const m = modal(`<div class="sb"><b>نسخة احتياطية</b><p class="small" style="font-size:13.5px">نزّل ملف فيه كل التابات والصور، وتقدر ترجّعه في أي وقت.</p><div class="row"><button class="btn pri" id="bkD">تنزيل النسخة 💾</button><button class="btn" id="bkU">استرجاع من ملف 📂</button><button class="btn" id="bkX">إغلاق</button></div></div>`);
+  m.querySelector('#bkX').onclick = closeModal;
+  m.querySelector('#bkD').onclick = async () => { closeModal(); await saveFile(`stickers-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(S)); };
+  m.querySelector('#bkU').onclick = () => { closeModal(); $('#fJson').value = ''; $('#fJson').click(); };
+};
+$('#fJson').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const s = JSON.parse(await f.text()); if (!s.tabs) throw 0; if (!(await ask('استرجاع النسخة دي هيستبدل كل اللي موجود. تمام؟', 'استرجاع', true))) return; S = s; S.images = S.images || {}; cur = 0; sel = null; changed(); toast('اترجعت ✓'); } catch (er) { toast('الملف ده مش نسخة صحيحة'); }
+};
+async function saveFile(name, data) {
+  if (DL) {
+    try { const r = await DL.save({filename: name, data}); if (r.status === 'saved') toast('اتنزّل ✓'); return true; }
+    catch (e) { if (e && e.code === 'declined') return false; if (e && e.code === 'rate_limited') { toast('استنى ثانية وجرّب تاني'); return false; } }
+  }
+  try { const u = URL.createObjectURL(data instanceof Blob ? data : new Blob([data])); const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); return true; } catch (e) { toast('التنزيل مش متاح هنا'); return false; }
+}
+
+/* ---------- PDF ---------- */
+$('#bPdf').onclick = () => {
+  const m = modal(`<div class="sb"><b>طباعة / PDF</b><p class="small" style="font-size:13.5px">هيطلع ملف PDF بمقاس A4 مضبوط بالملّي — افتحه واطبعه بمقاس 100% (Actual size) من غير "Fit to page".</p>
+   <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-p="cur">التاب الحالي بس (${esc(T().name)})</button><button class="btn" data-p="all">كل التابات (${S.tabs.length} صفحة)</button><button class="btn" data-p="pick">اختيار تابات معيّنة</button><button class="btn" data-p="x">إلغاء</button></div><div id="pk"></div></div>`);
+  m.onclick = async e => {
+    const p = e.target.dataset.p; if (!p) return;
+    if (p === 'x') return closeModal();
+    if (p === 'pick') { m.querySelector('#pk').innerHTML = `<div style="margin-top:10px">${S.tabs.map((t, i) => `<label style="display:block;direction:ltr;text-align:right;padding:3px 0">${esc(t.name)} <input type="checkbox" value="${i}" ${i === cur ? 'checked' : ''}></label>`).join('')}<button class="btn pri" data-p="go" style="margin-top:8px">إنشاء PDF</button></div>`; return; }
+    let tabs = p === 'cur' ? [T()] : p === 'all' ? S.tabs : [...m.querySelectorAll('#pk input:checked')].map(i => S.tabs[+i.value]);
+    if (!tabs.length) return toast('اختار تاب واحد على الأقل');
+    closeModal(); await exportPdf(tabs);
+  };
+};
+async function exportPdf(tabs) {
+  toast('بجهّز الـPDF…');
+  try {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const {jsPDF} = window.jspdf; let doc;
+    tabs.forEach((tab, i) => { const o = tab.orient === 'l' ? 'landscape' : 'portrait'; if (!i) doc = new jsPDF({orientation: o, unit: 'mm', format: 'a4'}); else doc.addPage('a4', o); drawTab(doc, tab); });
+    const name = (tabs.length === 1 ? 'sticker-' + tabs[0].name : 'stickers-' + tabs.length + '-pages').replace(/[\\/:*?"<>|]+/g, '-') + '.pdf';
+    const ok = await saveFile(name, doc.output('blob'));
+    if (!ok && !DL) printFallback(tabs);
+  } catch (e) { console.error(e); toast('مقدرتش أعمل PDF — هفتح الطباعة العادية'); printFallback(tabs); }
+}
+function drawTab(doc, tab) {
+  ensureBlocks(tab); const L = layout(tab);
+  if (tab.cut) {
+    const xs = new Set(), ys = new Set();
+    L.boxes.forEach((b, i) => { if (tab.blocks[i].hidden) return; xs.add(+b.x.toFixed(2)); xs.add(+(b.x + b.w).toFixed(2)); ys.add(+b.y.toFixed(2)); ys.add(+(b.y + b.h).toFixed(2)); });
+    doc.setDrawColor(200); doc.setLineWidth(0.2);
+    xs.forEach(x => doc.line(x, 3, x, L.H - 3)); ys.forEach(y => doc.line(3, y, L.W - 3, y));
+  }
+  L.boxes.forEach((bx, i) => {
+    const b = tab.blocks[i]; if (b.hidden) return;
+    const xs = [bx.x]; tab.colW.forEach(w => xs.push(xs[xs.length - 1] + w));
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.3);
+    for (let c = 1; c < tab.colT.length; c++) doc.line(xs[c], bx.y, xs[c], bx.y + bx.h);
+    for (let r = 1; r < b.items.length; r++) { const y = bx.y + tab.headH + r * tab.rowH; doc.line(bx.x, y, bx.x + bx.w, y); }
+    doc.setLineWidth(0.5);
+    doc.line(bx.x, bx.y + tab.headH, bx.x + bx.w, bx.y + tab.headH);
+    doc.rect(bx.x, bx.y, bx.w, bx.h);
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+    doc.setFontSize(tab.headFs);
+    tab.colT.forEach((t, c) => { const s = headText(tab, b, c); if (s) doc.text(s, xs[c] + tab.colW[c] / 2, bx.y + tab.headH / 2, {align: 'center', baseline: 'middle'}); });
+    b.items.forEach((it, r) => {
+      const y0 = bx.y + tab.headH + r * tab.rowH, h = tab.rowH;
+      tab.colT.forEach((t, c) => {
+        const x0 = xs[c], w = tab.colW[c], p = tab.pad;
+        if (t === 'text' && it.t[c]) { doc.setFontSize(tab.textFs); doc.text(String(it.t[c]), x0 + w / 2, y0 + h / 2, {align: 'center', baseline: 'middle'}); }
+        if (t === 'qr') {
+          const m = qrMods(qrValue(tab, it, c)); if (!m) return;
+          const s = Math.max(4, Math.min(w, h) - 2 * p), u = s / m.n, qx = x0 + (w - s) / 2, qy = y0 + (h - s) / 2;
+          doc.setFillColor(0);
+          m.g.forEach((row, rr) => { let cc = 0; while (cc < m.n) { if (row[cc]) { let e = cc; while (e < m.n && row[e]) e++; doc.rect(qx + cc * u, qy + rr * u, (e - cc) * u + 0.01, u + 0.01, 'F'); cc = e; } else cc++; } });
+        }
+        if (t === 'image') {
+          const im = imgFor(tab, it, c); if (!im) return;
+          const bw = w - 2 * p, bh = h - 2 * p, sc = Math.min(bw / im.w, bh / im.h), iw = im.w * sc, ih = im.h * sc;
+          doc.addImage(im.d, 'JPEG', x0 + (w - iw) / 2, y0 + (h - ih) / 2, iw, ih, 'k' + hashStr(im.d), 'FAST');
+        }
+      });
+    });
+  });
+}
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i += 7) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + s.length; }
+function printFallback(tabs) {
+  const o = tabs[0].orient === 'l' ? 'landscape' : 'portrait';
+  $('#pageStyle').textContent = `@page{size:A4 ${o};margin:0}`;
+  const keep = sel; sel = null;
+  $('#printRoot').innerHTML = tabs.map(t => pageHTML(t, false)).join('');
+  sel = keep;
+  try { window.print(); } catch (e) { toast('الطباعة مش متاحة هنا'); }
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  let fileS = null, localS = null;
+  try { const r = await fetch('data/state.json', {cache: 'no-store'}); if (r.ok) fileS = await r.json(); } catch (e) {}
+  try { const l = localStorage.getItem(LS); if (l) localS = JSON.parse(l); } catch (e) {}
+  S = [fileS, localS].filter(x => x && x.tabs && x.tabs.length).sort((a, b) => (b.updated || 0) - (a.updated || 0))[0] || demo();
+  S.images = S.images || {}; S.skus = S.skus || {}; S.qrTpl = S.qrTpl || '{model}';
+  render(true);
+  setStatus('جاهز', 'ok');
+  if (window.claude && claude.use) {
+    claude.use('artifact').then(a => { ART = a; if (!a) setStatus('محفوظ على الجهاز بس', 'warn'); else if (localS && (!fileS || (localS.updated || 0) > (fileS.updated || 0))) setStatus('فيه تعديلات هتتحفظ مع أول تغيير', 'warn'); });
+    claude.use('downloads').then(d => { DL = d; });
+  }
+}
+boot();
+</script>
+</body>
+</html>
