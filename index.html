@@ -168,15 +168,7 @@ const rowModel = (tab, it) => { const i = textCol(tab); return i < 0 ? '' : Stri
 const lateIdx = tab => Math.min(1, tab.colT.length - 1);
 function headText(tab, b, c) { let s = b.head[c] || ''; if (b.late && c === lateIdx(tab)) s = (s + ' R').trim(); return s; }
 function skuFor(m) { if (!m || !S.skus) return ''; if (S.skus[m]) return S.skus[m]; const n = String(parseInt(m, 10)); return /^\d/.test(m) && S.skus[n] ? S.skus[n] : ''; }
-const QR_MODES = {
-  full: {n: 'الكود كامل باللون والمقاس', f: k => k},
-  nosize: {n: 'من غير مقاس العدسة', f: k => k.split('-').slice(0, 4).join('-')},
-  nocolor: {n: 'من غير اللون والمقاس', f: k => k.split('-').slice(0, 3).join('-')},
-  model: {n: 'البراند + رقم الموديل بس (كل الألوان)', f: k => k.split('-').slice(1, 3).join('-')},
-  num: {n: 'رقم الموديل من الكود بس', f: k => k.split('-')[2] || k},
-};
-const qrMode = () => QR_MODES[S.qrMode] ? S.qrMode : 'full';
-function qrFromSku(k) { const p = k.split('-'); return p.length >= 3 ? QR_MODES[qrMode()].f(k) : k; }
+function qrFromSku(k) { return k; }
 function qrValue(tab, it, c) { if (it.t[c]) return it.t[c]; const m = rowModel(tab, it); if (!m) return ''; const k = skuFor(m); if (k) return qrFromSku(k); return S.qrTpl === '{model}' && S.skus && Object.keys(S.skus).length ? '' : S.qrTpl.replace(/\{model\}/g, m); }
 function findImg(key) { if (!key) return null; if (S.images[key]) return S.images[key]; const k = String(key).toLowerCase(); for (const n in S.images) if (n.toLowerCase() === k) return S.images[n]; return null; }
 function imgFor(tab, it, c) { return findImg(it.t[c]) || findImg(rowModel(tab, it)); }
@@ -618,8 +610,7 @@ function openSettings() {
   h += `<div class="fld"><label><input type="checkbox" data-c="cut" ${t.cut ? 'checked' : ''}> خطوط القص الخفيفة بين المربعات</label></div>`;
   h += `<div class="grp"><h4>أعمدة المربع (بالترتيب من الشمال لليمين في الورقة)</h4>` + t.colT.map((ty, c) => `<div class="colrow"><b style="width:22px">${c + 1}</b><select data-ct="${c}"><option value="text" ${ty === 'text' ? 'selected' : ''}>نص / رقم الموديل</option><option value="qr" ${ty === 'qr' ? 'selected' : ''}>كود QR</option><option value="image" ${ty === 'image' ? 'selected' : ''}>صورة</option></select><span class="small">عرض</span><input type="number" step="0.5" min="5" data-cw="${c}" value="${t.colW[c]}"><span class="small">مم</span><button class="btn dan" data-dc="${c}" style="padding:4px 9px">✕</button></div>`).join('') +
     `<div class="row"><button class="btn" data-a="addcol">إضافة عمود ➕</button><button class="btn" data-a="allrows">إضافة صف لكل المربعات ➕</button><button class="btn" data-a="delrows">حذف آخر صف من كل المربعات ➖</button></div></div>`;
-  const exK = skuFor(rowModel(t, (t.blocks.find(b => b.items.some(it => skuFor(rowModel(t, it)))) || {items: [{t: ['']}]}).items.find(it => skuFor(rowModel(t, it))) || {t: ['']})) || 'sm70107-30s-000247-0107-57';
-  h += `<div class="grp"><h4>محتوى الـQR (لكل الصفحات)</h4><p class="small">الكود اللي بيتكتب جوه الـQR لما حد يعمله سكان. المثال من الصفحة دي: <span class="ltr" style="display:inline-block">${esc(exK)}</span></p>` + Object.entries(QR_MODES).map(([k, v]) => `<label style="display:flex;gap:8px;align-items:center;padding:5px 0"><input type="radio" name="qm" data-qm="${k}" ${qrMode() === k ? 'checked' : ''}> <span>${v.n}</span> <span class="ltr" style="margin-inline-start:auto;background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:12.5px">${esc(v.f(exK))}</span></label>`).join('') + `<div class="fld" style="margin-top:8px"><label>للموديلات اللي ملهاش كود محفوظ: شكل الـQR (اكتب {model} مكان رقم الموديل)</label><input type="text" class="ltr" data-q="1" value="${esc(S.qrTpl)}"></div></div>`;
+  h += `<div class="grp"><h4>كود QR (لكل الصفحات)</h4><div class="fld"><label>للموديلات اللي ملهاش كود محفوظ: شكل الـQR (اكتب {model} مكان رقم الموديل)</label><input type="text" class="ltr" data-q="1" value="${esc(S.qrTpl)}"></div></div>`;
   const body = openSheet('إعدادات الصفحة — ' + tabLabel(t), h);
   body.onchange = async e => {
     const el = e.target;
@@ -645,7 +636,6 @@ function openSettings() {
     if (el.dataset.ct != null) { t.colT[+el.dataset.ct] = el.value; changed(); }
     if (el.dataset.cw != null) { const v = parseFloat(el.value); if (v > 0) { t.colW[+el.dataset.cw] = v; changed(); } }
     if (el.dataset.q) { S.qrTpl = el.value || '{model}'; qrCache.clear(); changed(); }
-    if (el.dataset.qm) { S.qrMode = el.dataset.qm; changed(); toast('اتغيّر محتوى الـQR في كل الصفحات ✓'); }
   };
   body.onclick = async e => {
     const el = e.target;
