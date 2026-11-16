@@ -111,6 +111,7 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
   <div class="nav" id="tabs"></div>
   <div class="tools">
     <button class="tb pri" id="bPdf">طباعة PDF 🖨️</button>
+    <button class="tb" id="bSort">ترتيب وفلترة ↕️</button>
     <button class="tb" id="bNew">موديل وصل جديد R ➕</button>
     <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
     <button class="tb" id="bMore">المزيد ⋯</button>
@@ -360,7 +361,7 @@ function tabMenu() {
   <div class="row" style="flex-direction:column;align-items:stretch">
   <button class="btn" data-a="ren">نقلها لكولكشن أو نوع تاني ✏️</button>
   <button class="btn" data-a="dup">نسخ الصفحة دي 📄</button>
-  <button class="btn" data-a="sortall">إعادة ترتيب الكل تصاعدي ↕️</button>
+  <button class="btn" data-a="sortall">ترتيب وفلترة ↕️</button>
   <button class="btn" data-a="left">تقديم الصفحة خطوة ➡️</button>
   <button class="btn" data-a="right">تأخير الصفحة خطوة ⬅️</button>
   <button class="btn dan" data-a="del">حذف الصفحة 🗑️</button>
@@ -369,20 +370,79 @@ function tabMenu() {
     const a = e.target.dataset.a; if (!a) return; closeModal();
     if (a === 'ren') { const c = await askText('الكولكشن (30S / BLC / OC)', T().col); if (!c) return; const g = await askText('النوع (MEN / WOMEN / UNISEX)', T().gen); if (!g) return; T().col = c.toUpperCase(); T().gen = normGen(g); changed(); }
     if (a === 'dup') { const t = JSON.parse(JSON.stringify(T())); t.id = uid(); S.tabs.splice(cur + 1, 0, t); cur++; changed(); }
-    if (a === 'sortall') { if (await ask('هرتّب كل الموديلات في الصفحة دي تصاعدي من أول مربع لآخر مربع، وهشيل علامة R. تمام؟')) { sortAll(T()); changed(); toast('اترتّبت ✓'); } }
+    if (a === 'sortall') openSort();
     if (a === 'left' || a === 'right') { const ps = pagesOf(T().col, T().gen), k = ps.indexOf(cur), o = ps[k + (a === 'left' ? -1 : 1)]; if (o == null) return; [S.tabs[o], S.tabs[cur]] = [S.tabs[cur], S.tabs[o]]; cur = o; changed(); }
     if (a === 'del') { if (S.tabs.length === 1) { toast('لازم تفضل صفحة واحدة على الأقل'); return; } if (await ask(`حذف صفحة «${esc(tabLabel(T()))}» نهائيًا؟`, 'حذف', true)) { const col = T().col, gen = T().gen; S.tabs.splice(cur, 1); const sib = pagesOf(col, gen), sc = pagesOf(col, genList(col)[0]); cur = sib.length ? sib[Math.max(0, Math.min(sib.length - 1, pageNo(sib[0]) - 1))] : sc.length ? sc[0] : 0; sel = null; changed(); } }
   };
 }
-function sortAll(tab) {
-  const tc = textCol(tab); if (tc < 0) return;
-  const vis = tab.blocks.filter(b => !b.hidden);
-  const items = []; vis.forEach(b => b.items.forEach(it => { if (rowModel(tab, it)) items.push(it); }));
-  items.sort((a, b) => ncmp(rowModel(tab, a), rowModel(tab, b)));
-  let k = 0;
-  vis.forEach(b => { b.late = false; b.items = b.items.map(() => items[k] ? items[k++] : {t: tab.colT.map(() => '')}); });
-  while (k < items.length) { const nb = emptyBlock(tab, 0); const ref = vis[vis.length - 1]; nb.head = ref ? [...ref.head] : nb.head; const n = ref ? ref.items.length : 3; for (let j = 0; j < n; j++) nb.items.push(items[k] ? items[k++] : {t: tab.colT.map(() => '')}); tab.blocks.push(nb); tab.rows = Math.ceil(tab.blocks.length / tab.cols); }
+/* ---------- sorting ---------- */
+const skuPart = (m, k) => { const v = skuFor(m); return v ? (v.split('-')[k] || '') : ''; };
+const SORTS = {
+  asc: {n: 'رقم الموديل تصاعدي (الصغير الأول)', f: (a, b) => ncmp(a, b)},
+  desc: {n: 'رقم الموديل تنازلي (الكبير الأول)', f: (a, b) => ncmp(b, a)},
+  size: {n: 'حسب المقاس من الـSKU (الصغير الأول)', f: (a, b) => ncmp(skuPart(a, 4) || 'zz', skuPart(b, 4) || 'zz') || ncmp(a, b)},
+  color: {n: 'حسب كود اللون من الـSKU', f: (a, b) => ncmp(skuPart(a, 3) || 'zz', skuPart(b, 3) || 'zz') || ncmp(a, b)},
+  style: {n: 'حسب كود الستايل/الشكل من الـSKU', f: (a, b) => ncmp(skuPart(a, 0) || 'zz', skuPart(b, 0) || 'zz') || ncmp(a, b)},
+  custom: {n: 'ترتيب مخصص (أنا أكتب الترتيب)', f: null},
+};
+let lastSort = {mode: 'asc', scope: 'gen', clearR: true, renum: true, custom: ''};
+function openSort() {
+  const t = T(), o = lastSort;
+  const sc = [['page', `الصفحة دي بس (${tabLabel(t)})`], ['gen', `القسم ده كله: ${t.col} ${t.gen} (${pagesOf(t.col, t.gen).length} صفحة)`], ['col', `الكولكشن ${t.col} كله (كل أنواعه)`], ['all', 'كل الأقسام (30S + BLC + OC)']];
+  const m = modal(`<div class="sb"><b>ترتيب وفلترة ↕️</b>
+   <div class="grp" style="border:none;margin-top:6px;padding-top:0"><h4>رتّب حسب</h4>${Object.entries(SORTS).map(([k, v]) => `<label style="display:block;padding:4px 0"><input type="radio" name="sm" value="${k}" ${o.mode === k ? 'checked' : ''}> ${v.n}</label>`).join('')}
+   <div id="cBox" style="display:${o.mode === 'custom' ? 'block' : 'none'}"><textarea id="cTxt" rows="4" class="ltr" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px" placeholder="207&#10;303&#10;234 ...">${esc(o.custom)}</textarea><div class="small">اكتب أرقام الموديلات بالترتيب اللي عاوزه (كل رقم في سطر أو بينهم مسافة/فاصلة). الموديلات اللي مش مكتوبة هتيجي بعدهم تصاعدي.</div></div></div>
+   <div class="grp"><h4>طبّق على</h4>${sc.map(([k, v]) => `<label style="display:block;padding:4px 0"><input type="radio" name="ss" value="${k}" ${o.scope === k ? 'checked' : ''}> <span style="unicode-bidi:plaintext">${esc(v)}</span></label>`).join('')}</div>
+   <div class="grp"><h4>اختيارات</h4>
+   <label style="display:block;padding:3px 0"><input type="checkbox" id="oR" ${o.clearR ? 'checked' : ''}> شيل علامات R بعد الترتيب</label>
+   <label style="display:block;padding:3px 0"><input type="checkbox" id="oN" ${o.renum ? 'checked' : ''}> أعد ترقيم المربعات 1، 2، 3… في كل قسم</label>
+   <p class="small">كل قسم (كولكشن + نوع) بيترتّب لوحده — مفيش خلط بين MEN وWOMEN. الصور والـQR بتتنقل مع الموديل.</p></div>
+   <div class="row"><button class="btn pri" id="sGo">رتّب دلوقتي ✨</button><button class="btn" id="sX">إلغاء</button></div></div>`);
+  m.querySelectorAll('input[name=sm]').forEach(r => r.onchange = () => { m.querySelector('#cBox').style.display = r.value === 'custom' && r.checked ? 'block' : 'none'; });
+  m.querySelector('#sX').onclick = closeModal;
+  m.querySelector('#sGo').onclick = async () => {
+    lastSort = {mode: m.querySelector('input[name=sm]:checked').value, scope: m.querySelector('input[name=ss]:checked').value, clearR: m.querySelector('#oR').checked, renum: m.querySelector('#oN').checked, custom: m.querySelector('#cTxt').value};
+    const L = lastSort;
+    let cmp = SORTS[L.mode].f;
+    if (L.mode === 'custom') {
+      const list = L.custom.split(/[\s,،;]+/).map(x => x.trim()).filter(Boolean); if (!list.length) return toast('اكتب ترتيب الموديلات الأول');
+      const pos = new Map(list.map((x, i) => [x.toLowerCase(), i]));
+      cmp = (a, b) => { const pa = pos.get(a.toLowerCase()), pb = pos.get(b.toLowerCase()); if (pa != null && pb != null) return pa - pb; if (pa != null) return -1; if (pb != null) return 1; return ncmp(a, b); };
+    }
+    const groups = [];
+    if (L.scope === 'page') groups.push([cur]);
+    else { const t = T(); const keys = L.scope === 'gen' ? [[t.col, t.gen]] : (L.scope === 'col' ? [t.col] : colList()).flatMap(c => genList(c).map(g => [c, g])); keys.forEach(([c, g]) => groups.push(pagesOf(c, g))); }
+    const nPages = groups.reduce((a, g) => a + g.length, 0);
+    if (!(await ask(`هرتّب ${groups.length > 1 ? groups.length + ' أقسام' : 'القسم'} (${nPages} صفحة) — ${SORTS[L.mode].n}. تمام؟`, 'رتّب'))) return;
+    const curId = T().id; let added = 0;
+    groups.forEach(g => { added += sortGroup(g.map(i => S.tabs[i]), cmp, L); });
+    cur = Math.max(0, S.tabs.findIndex(t => t.id === curId)); sel = null; closeSheetQuiet(); changed();
+    toast('اترتّب ✓' + (added ? ` — اتضافت ${added} صفحة` : ''));
+  };
 }
+function sortGroup(tabs, cmp, L) {
+  const t0 = tabs[0], tc = textCol(t0); if (tc < 0) return 0;
+  const items = [];
+  tabs.forEach(t => t.blocks.forEach(b => { if (!b.hidden) b.items.forEach(it => { if (rowModel(t, it)) items.push(it); }); }));
+  items.sort((a, b) => cmp(rowModel(t0, a), rowModel(t0, b)));
+  let k = 0, num = 0, added = 0;
+  const fill = t => t.blocks.forEach(b => {
+    if (b.hidden) return;
+    const had = !!items[k];
+    b.items = b.items.map(() => items[k] ? items[k++] : {t: t.colT.map(() => '')});
+    if (L.clearR) b.late = false;
+    if (had) { num++; if (L.renum) { b.head = t.colT.map((_, c) => b.head[c] || ''); b.head[0] = b.head[0] || t.col; b.head[t.colT.length - 1] = b.head[t.colT.length - 1] || t.gen; b.head[lateIdx(t)] = String(num); } }
+    else if (L.renum) { b.head = t.colT.map(() => ''); b.late = false; }
+  });
+  tabs.forEach(fill);
+  while (k < items.length) {
+    const last = tabs[tabs.length - 1], nt = JSON.parse(JSON.stringify(last)); nt.id = uid();
+    nt.blocks = []; ensureBlocks(nt); const per = last.blocks.find(b => !b.hidden)?.items.length || 3; nt.blocks.forEach(b => { b.items = Array.from({length: per}, () => ({t: nt.colT.map(() => '')})); });
+    S.tabs.splice(S.tabs.indexOf(last) + 1, 0, nt); tabs.push(nt); fill(nt); added++;
+  }
+  return added;
+}
+$('#bSort').onclick = openSort;
 
 /* ---------- block / row editor ---------- */
 $('#wrap').addEventListener('click', e => {
