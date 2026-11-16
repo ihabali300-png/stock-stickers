@@ -99,7 +99,10 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
 @media print{
   body>*:not(#printRoot){display:none!important}
   #printRoot{display:block}
-  #printRoot .page{position:relative;box-shadow:none;transform:none!important;page-break-after:always;break-after:page}
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  #printRoot .page{position:relative;box-shadow:none;transform:none!important;page-break-after:always;break-after:page;margin:0}
+  #printRoot .page:last-child{page-break-after:auto;break-after:auto}
+  .blk td,.blk tr.hd td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .blk.sel{outline:none}
   .blk tr.rsel td{background:none}
 }
@@ -110,7 +113,7 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
   <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><span id="status" class="status">جاري التحميل…</span></div>
   <div class="nav" id="tabs"></div>
   <div class="tools">
-    <button class="tb pri" id="bPdf">طباعة PDF 🖨️</button>
+    <button class="tb pri" id="bPdf">طباعة 🖨️</button>
     <button class="tb" id="bSort">ترتيب وفلترة ↕️</button>
     <button class="tb" id="bNew">موديل وصل جديد R ➕</button>
     <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
@@ -789,18 +792,22 @@ async function saveFile(name, data) {
 }
 
 /* ---------- PDF ---------- */
-$('#bPdf').onclick = () => {
-  const m = modal(`<div class="sb"><b>طباعة / PDF</b><p class="small" style="font-size:13.5px">هيطلع ملف PDF بمقاس A4 مضبوط بالملّي — افتحه واطبعه بمقاس 100% (Actual size) من غير "Fit to page".</p>
-   <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-p="cur">الصفحة دي بس (<span style="direction:ltr;display:inline-block">${esc(tabLabel(T()))}</span>)</button><button class="btn" data-p="gen">كل صفحات ${esc(T().col)} ${esc(T().gen)} (${pagesOf(T().col, T().gen).length})</button><button class="btn" data-p="col">كل صفحات ${esc(T().col)} (${S.tabs.filter(t => t.col === T().col).length})</button><button class="btn" data-p="all">كل الصفحات (${S.tabs.length})</button><button class="btn" data-p="pick">اختيار صفحات معيّنة</button><button class="btn" data-p="x">إلغاء</button></div><div id="pk"></div></div>`);
-  m.onclick = async e => {
-    const p = e.target.dataset.p; if (!p) return;
-    if (p === 'x') return closeModal();
-    if (p === 'pick') { m.querySelector('#pk').innerHTML = `<div style="margin-top:10px">${S.tabs.map((t, i) => `<label style="display:block;direction:ltr;text-align:right;padding:3px 0">${esc(tabLabel(t))} <input type="checkbox" value="${i}" ${i === cur ? 'checked' : ''}></label>`).join('')}<button class="btn pri" data-p="go" style="margin-top:8px">إنشاء PDF</button></div>`; return; }
-    let tabs = p === 'cur' ? [T()] : p === 'gen' ? pagesOf(T().col, T().gen).map(i => S.tabs[i]) : p === 'col' ? S.tabs.filter(t => t.col === T().col) : p === 'all' ? S.tabs : [...m.querySelectorAll('#pk input:checked')].map(i => S.tabs[+i.value]);
-    if (!tabs.length) return toast('اختار تاب واحد على الأقل');
-    closeModal(); await exportPdf(tabs);
-  };
-};
+const IN_CLAUDE = !!(window.claude && claude.use);
+function openPrint() {
+  const t = T();
+  const sc = [['cur', `الصفحة دي بس (${tabLabel(t)})`], ['gen', `كل صفحات ${t.col} ${t.gen} (${pagesOf(t.col, t.gen).length})`], ['col', `كل صفحات ${t.col} (${S.tabs.filter(x => x.col === t.col).length})`], ['all', `كل الصفحات (${S.tabs.length})`], ['pick', 'اختيار صفحات معيّنة']];
+  const m = modal(`<div class="sb"><b>طباعة 🖨️</b>
+   <div class="grp" style="border:none;margin-top:6px;padding-top:0"><h4>اطبع إيه</h4>${sc.map(([k, v], i) => `<label style="display:block;padding:4px 0"><input type="radio" name="ps" value="${k}" ${i === 0 ? 'checked' : ''}> <span style="unicode-bidi:plaintext">${esc(v)}</span></label>`).join('')}<div id="pk"></div></div>
+   <div class="row" style="margin-top:6px">${IN_CLAUDE ? '' : '<button class="btn pri" id="pPr">طباعة على الطابعة 🖨️</button>'}<button class="btn ${IN_CLAUDE ? 'pri' : ''}" id="pPdf">حفظ PDF 📄</button><button class="btn" id="pX">إلغاء</button></div>
+   <p class="small" style="margin-top:10px">${IN_CLAUDE ? 'الطباعة المباشرة بتشتغل من رابط GitHub — هنا متاح حفظ PDF بس.' : 'في شاشة الطباعة اختار طابعة HP LaserJet مرة واحدة والمتصفح هيفتكرها بعد كده. خلّي الـScale على Default أو 100% مش Fit to paper عشان المقاسات تطلع مظبوطة.'}</p></div>`);
+  const pick = () => { const v = m.querySelector('input[name=ps]:checked').value; m.querySelector('#pk').innerHTML = v === 'pick' ? `<div style="margin:6px 18px 0">${S.tabs.map((x, i) => `<label style="display:block;padding:3px 0"><input type="checkbox" value="${i}" ${i === cur ? 'checked' : ''}> <span style="direction:ltr;display:inline-block">${esc(tabLabel(x))}</span></label>`).join('')}</div>` : ''; };
+  m.querySelectorAll('input[name=ps]').forEach(r => r.onchange = pick);
+  const chosen = () => { const v = m.querySelector('input[name=ps]:checked').value; return v === 'cur' ? [T()] : v === 'gen' ? pagesOf(T().col, T().gen).map(i => S.tabs[i]) : v === 'col' ? S.tabs.filter(x => x.col === T().col) : v === 'all' ? S.tabs : [...m.querySelectorAll('#pk input:checked')].map(i => S.tabs[+i.value]); };
+  m.querySelector('#pX').onclick = closeModal;
+  m.querySelector('#pPdf').onclick = async () => { const tabs = chosen(); if (!tabs.length) return toast('اختار صفحة واحدة على الأقل'); closeModal(); await exportPdf(tabs); };
+  const pr = m.querySelector('#pPr'); if (pr) pr.onclick = () => { const tabs = chosen(); if (!tabs.length) return toast('اختار صفحة واحدة على الأقل'); closeModal(); printDirect(tabs); };
+}
+$('#bPdf').onclick = openPrint;
 async function exportPdf(tabs) {
   toast('بجهّز الـPDF…');
   try {
@@ -854,14 +861,19 @@ function drawTab(doc, tab) {
   });
 }
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i += 7) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + s.length; }
-function printFallback(tabs) {
+function printDirect(tabs) {
   const o = tabs[0].orient === 'l' ? 'landscape' : 'portrait';
   $('#pageStyle').textContent = `@page{size:A4 ${o};margin:0}`;
   const keep = sel; sel = null;
   $('#printRoot').innerHTML = tabs.map(t => pageHTML(t, false)).join('');
   sel = keep;
-  try { window.print(); } catch (e) { toast('الطباعة مش متاحة هنا'); }
+  const imgs = [...$('#printRoot').querySelectorAll('img')];
+  Promise.all(imgs.map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }))).then(() => setTimeout(() => {
+    try { window.print(); } catch (e) { toast('الطباعة مش متاحة هنا — استخدم حفظ PDF'); }
+  }, 60));
 }
+const printFallback = printDirect;
+window.addEventListener('afterprint', () => { $('#printRoot').innerHTML = ''; });
 
 /* ---------- boot ---------- */
 async function boot() {
