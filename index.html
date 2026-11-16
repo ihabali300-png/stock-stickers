@@ -300,6 +300,14 @@ async function publishNow() {
 }
 
 /* ---------- ui helpers ---------- */
+async function copyText(txt, label) {
+  if (!txt) return toast('مفيش حاجة تتنسخ');
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) {}
+  if (!ok) { try { const ta = document.createElement('textarea'); ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e) {} }
+  if (ok) toast('اتنسخ ' + (label || '') + ' ✓');
+  else { const m = modal(`<div class="sb"><b>انسخ من هنا</b><textarea class="ltr" rows="8" style="width:100%;margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px" readonly>${esc(txt)}</textarea><div class="row" style="margin-top:8px"><button class="btn" id="cpX">إغلاق</button></div></div>`); const ta = m.querySelector('textarea'); ta.focus(); ta.select(); m.querySelector('#cpX').onclick = closeModal; }
+}
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2600); }
 function modal(html) { $('#mbox').innerHTML = html; $('#modal').classList.add('open'); return $('#mbox'); }
 function closeModal() { $('#modal').classList.remove('open'); }
@@ -339,12 +347,13 @@ $('#bMore').onclick = () => {
   const m = modal(`<div class="sb"><b>المزيد</b><div class="row" style="flex-direction:column;align-items:stretch;margin-top:10px">
   <button class="btn" data-a="page">إدارة الصفحة دي (${esc(tabLabel(T()))}) 📄</button>
   <button class="btn" data-a="sec">إضافة كولكشن أو نوع جديد ➕</button>
+  <button class="btn" data-a="cp">نسخ أرقام الموديلات والأكواد 📋</button>
   <button class="btn" data-a="imp">استيراد من الشيت 📥</button>
   <button class="btn" data-a="imgs">رفع صور بالجملة 🖼️</button>
   <button class="btn" data-a="bak">نسخة احتياطية 💾</button>
   <button class="btn" data-a="x">إغلاق</button></div></div>`);
   m.onclick = e => { const a = e.target.dataset.a; if (!a) return; closeModal();
-    if (a === 'page') tabMenu(); if (a === 'sec') newSection(); if (a === 'imp') openImport(); if (a === 'imgs') openBulkImgs(); if (a === 'bak') openBackup(); };
+    if (a === 'page') tabMenu(); if (a === 'cp') openCopy(); if (a === 'sec') newSection(); if (a === 'imp') openImport(); if (a === 'imgs') openBulkImgs(); if (a === 'bak') openBackup(); };
 };
 function newSection() {
   const m = modal(`<div class="sb"><b>كولكشن أو نوع جديد</b><div class="row" style="margin-top:10px"><div class="fld"><label>الكولكشن</label><input type="text" id="nC" class="ltr" value="${esc(T().col)}"></div><div class="fld"><label>النوع</label><input type="text" id="nG" class="ltr" placeholder="MEN / WOMEN / UNISEX"></div></div><div class="row"><button class="btn pri" id="nY">إضافة</button><button class="btn" id="nN">إلغاء</button></div></div>`);
@@ -375,6 +384,33 @@ function tabMenu() {
     if (a === 'del') { if (S.tabs.length === 1) { toast('لازم تفضل صفحة واحدة على الأقل'); return; } if (await ask(`حذف صفحة «${esc(tabLabel(T()))}» نهائيًا؟`, 'حذف', true)) { const col = T().col, gen = T().gen; S.tabs.splice(cur, 1); const sib = pagesOf(col, gen), sc = pagesOf(col, genList(col)[0]); cur = sib.length ? sib[Math.max(0, Math.min(sib.length - 1, pageNo(sib[0]) - 1))] : sc.length ? sc[0] : 0; sel = null; changed(); } }
   };
 }
+/* ---------- copy lists ---------- */
+function copyList(tabs, what, onlyBlock) {
+  const lines = [];
+  tabs.forEach(t => t.blocks.forEach(b => { if (b.hidden || (onlyBlock && b !== onlyBlock)) return; const qc = t.colT.indexOf('qr'); b.items.forEach(it => { const m = rowModel(t, it); if (!m) return; const q = qc >= 0 ? qrValue(t, it, qc) : skuFor(m); lines.push(what === 'models' ? m : what === 'codes' ? q : m + '\t' + q); }); }));
+  copyText(lines.filter(Boolean).join('\n'), `${lines.length} موديل`);
+}
+function openCopy() {
+  const t = T();
+  const m = modal(`<div class="sb"><b>نسخ أرقام الموديلات والأكواد 📋</b>
+   <div class="grp" style="border:none;margin-top:6px;padding-top:0"><h4>انسخ إيه</h4>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cw" value="models" checked> أرقام الموديلات بس</label>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cw" value="codes"> أكواد الـSKU بس</label>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cw" value="both"> الاتنين جنب بعض (تتلصق في الشيت عمودين)</label></div>
+   <div class="grp"><h4>من فين</h4>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cs" value="page" checked> الصفحة دي بس</label>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cs" value="gen"> القسم ده كله (<span style="direction:ltr;display:inline-block">${esc(t.col + ' ' + t.gen)}</span>)</label>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cs" value="col"> الكولكشن ${esc(t.col)} كله</label>
+   <label style="display:block;padding:4px 0"><input type="radio" name="cs" value="all"> كل الأقسام</label></div>
+   <div class="row"><button class="btn pri" id="cGo">نسخ 📋</button><button class="btn" id="cX">إغلاق</button></div></div>`);
+  m.querySelector('#cX').onclick = closeModal;
+  m.querySelector('#cGo').onclick = () => {
+    const w = m.querySelector('input[name=cw]:checked').value, sc = m.querySelector('input[name=cs]:checked').value;
+    const tabs = sc === 'page' ? [t] : sc === 'gen' ? pagesOf(t.col, t.gen).map(i => S.tabs[i]) : sc === 'col' ? S.tabs.filter(x => x.col === t.col) : S.tabs;
+    closeModal(); copyList(tabs, w);
+  };
+}
+
 /* ---------- sorting ---------- */
 const skuPart = (m, k) => { const v = skuFor(m); return v ? (v.split('-')[k] || '') : ''; };
 const SORTS = {
@@ -463,8 +499,8 @@ function openEditor() {
   } else {
     const it = b.items[sel.r], m = rowModel(tab, it);
     tab.colT.forEach((t, c) => {
-      if (t === 'text') h += `<div class="fld"><label>${c === textCol(tab) ? 'رقم الموديل' : 'نص خانة ' + (c + 1)}</label><input type="text" class="ltr" data-t="${c}" value="${esc(it.t[c])}" ${c === textCol(tab) ? 'inputmode="text" autocomplete="off"' : ''}></div>`;
-      if (t === 'qr') h += `<div class="fld"><label>محتوى QR (فاضي = تلقائي من كود الـSKU المحفوظ للموديل)</label><input type="text" class="ltr" data-t="${c}" value="${esc(it.t[c])}" placeholder="${esc(qrValue(tab, {t: it.t.map((x, i) => i === c ? '' : x)}, c) || 'مفيش كود محفوظ — اكتبه هنا')}"></div>`;
+      if (t === 'text') h += `<div class="fld"><label>${c === textCol(tab) ? 'رقم الموديل' : 'نص خانة ' + (c + 1)}</label><div class="row" style="flex-wrap:nowrap"><input type="text" class="ltr" style="flex:1" data-t="${c}" value="${esc(it.t[c])}" ${c === textCol(tab) ? 'inputmode="text" autocomplete="off"' : ''}><button class="btn" data-cp="t${c}">نسخ 📋</button></div></div>`;
+      if (t === 'qr') h += `<div class="fld"><label>محتوى QR (فاضي = تلقائي من كود الـSKU المحفوظ للموديل)</label><div class="row" style="flex-wrap:nowrap"><input type="text" class="ltr" data-t="${c}" value="${esc(it.t[c])}" placeholder="${esc(qrValue(tab, {t: it.t.map((x, i) => i === c ? '' : x)}, c) || 'مفيش كود محفوظ — اكتبه هنا')}" style="flex:1"><button class="btn" data-cp="q${c}">نسخ 📋</button></div></div>`;
       if (t === 'image') { const im = imgFor(tab, it, c); h += `<div class="fld"><label>صورة الموديل</label><div class="row"><div class="thumb">${im ? `<img src="${im.d}">` : '<span class="small">مفيش صورة</span>'}</div><button class="btn" data-a="img" data-c="${c}">رفع صورة 📷</button>${im ? `<button class="btn dan" data-a="rmimg" data-c="${c}">حذف الصورة</button>` : ''}</div><div class="small" style="margin-top:4px">الصورة بتتربط برقم الموديل، فلو الموديل اتكرر هتظهر تلقائي</div></div>`; }
     });
     h += `<div class="row"><button class="btn" data-a="prev">⬆️ الصف اللي فوق</button><button class="btn pri" data-a="next">الصف اللي بعده ⬇️</button></div>`;
@@ -474,6 +510,7 @@ function openEditor() {
     <button class="btn" data-a="addRow">إضافة صف ➕</button>
     <button class="btn" data-a="sort">ترتيب تصاعدي ↕️</button>
     ${isHead ? '' : `<button class="btn ${b.late ? 'on' : ''}" data-a="late">علامة R ${b.late ? '✓' : ''}</button>`}
+    <button class="btn" data-a="cpBlock">نسخ موديلات المربع 📋</button>
     <button class="btn" data-a="hide">إخفاء المربع 👁️</button>
     <button class="btn dan" data-a="clear">تفريغ المربع 🧹</button></div></div>`;
   const body = openSheet(isHead ? `هيدر المربع رقم ${sel.b + 1}` : `مربع ${sel.b + 1} — صف ${sel.r + 1}`, h);
@@ -483,6 +520,8 @@ function openEditor() {
     if (el.dataset.t != null) { const c = +el.dataset.t, it = b.items[sel.r]; it.t[c] = el.value; if (tab.colT[c] === 'qr' && el.value.trim() && rowModel(tab, it)) { S.skus[rowModel(tab, it)] = el.value.trim(); it.t[c] = ''; } changed(); }
   };
   body.onclick = async e => {
+    const cp = e.target.closest('[data-cp]');
+    if (cp) { const k = cp.dataset.cp, c = +k.slice(1), it = b.items[sel.r]; if (k[0] === 't') copyText(String(it.t[c] || '').trim(), 'الرقم'); else copyText(qrValue(tab, it, c), 'الكود'); return; }
     const btn = e.target.closest('[data-a]'); if (!btn) return; const a = btn.dataset.a;
     if (a === 'late') { b.late = !b.late; changed(); openEditor(); }
     if (a === 'next' || a === 'prev') { moveSel(a === 'next' ? 1 : -1); }
@@ -493,6 +532,7 @@ function openEditor() {
     if (a === 'addRow') { b.items.push({t: tab.colT.map(() => '')}); sel.r = b.items.length - 1; changed(); openEditor(); }
     if (a === 'sort') { b.items.sort((x, y) => { const mx = rowModel(tab, x), my = rowModel(tab, y); if (!mx) return 1; if (!my) return -1; return ncmp(mx, my); }); changed(); toast('اترتّب ✓'); openEditor(); }
     if (a === 'hide') { b.hidden = true; changed(); closeSheet(); }
+    if (a === 'cpBlock') copyList([tab], 'both', b);
     if (a === 'clear') { if (await ask('تفريغ كل محتوى المربع ده؟', 'تفريغ', true)) { const n = b.items.length; Object.assign(b, emptyBlock(tab, n)); changed(); openEditor(); } }
     if (a === 'img') { pickImg(+btn.dataset.c); }
     if (a === 'rmimg') { const it = b.items[sel.r], c = +btn.dataset.c; if (it.t[c]) it.t[c] = ''; else delete S.images[findKey(rowModel(tab, it))]; changed(); openEditor(); }
