@@ -20,11 +20,23 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .status{margin-inline-start:auto;font-size:12px;color:var(--mut);background:#f3f4f6;border-radius:99px;padding:2px 10px;white-space:nowrap}
 .status.ok{color:var(--acc);background:var(--acc2)}
 .status.warn{color:var(--warn);background:#fef3c7}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 12px;font-size:14px;font-weight:600;direction:ltr}
-.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.tab.add{color:var(--acc);font-weight:800}
+.nav{padding:4px 10px 2px}
+.mrow{display:flex;gap:8px}
+.mt{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:6px 6px 5px;display:flex;flex-direction:column;align-items:center;line-height:1.2;max-width:220px}
+.mt b{font-size:18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.5px}
+.mt small{font-size:11px;color:var(--mut);font-weight:600}
+.mt.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.mt.on small{color:#cbd5e1}
+.srow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.st{border:1px solid var(--line);background:#f8fafc;border-radius:99px;padding:4px 14px;font-size:13.5px;font-weight:700;font-family:Arial,Helvetica,sans-serif}
+.st .cnt{font-size:11px;color:var(--mut);font-weight:600;margin:0 6px}
+.st.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.st.on .cnt{color:#ccfbf1}
+.prow{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.prow .lbl{font-size:12px;color:var(--mut);font-weight:700}
+.pg{min-width:34px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:3px 9px;font-size:13px;font-weight:700}
+.pg.on{background:var(--acc2);border-color:var(--acc);color:var(--acc)}
+.pg.add{color:var(--acc)}
 .tools{display:flex;gap:6px;overflow-x:auto;padding:4px 10px 8px;scrollbar-width:none}
 .tools::-webkit-scrollbar{display:none}
 .tb{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-size:13px;font-weight:700;white-space:nowrap}
@@ -46,7 +58,13 @@ input,select,textarea{font-family:inherit;font-size:15px}
 .ghost{position:absolute;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-family:Cairo;font-size:14px;cursor:pointer}
 .hint{max-width:900px;margin:10px auto 0;text-align:center;color:var(--mut);font-size:13px}
 /* sheet */
-.sheet{position:fixed;inset:auto 0 0 0;z-index:40;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.18);max-height:72vh;overflow:auto;transform:translateY(105%);transition:transform .2s}
+.sheet{position:fixed;inset:auto 0 0 0;z-index:40;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.18);max-height:58vh;overflow:auto;transform:translateY(105%);transition:transform .2s}
+body.shopen .stage{padding-bottom:62vh}
+@media (min-width:900px){
+ .sheet{inset:0 auto 0 0;width:380px;max-height:none;border-radius:0;box-shadow:6px 0 30px rgba(0,0,0,.12);transform:translateX(-105%)}
+ body.shopen .stage{padding-bottom:140px;margin-left:380px}
+ body.shopen .top{margin-left:380px}
+}
 .sheet.open{transform:none}
 .sheet .hdr{position:sticky;top:0;background:#fff;display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);z-index:2}
 .sheet .hdr b{font-size:15px}
@@ -90,15 +108,12 @@ table.prev td,table.prev th{border:1px solid var(--line);padding:3px 5px;white-s
 <body>
 <div class="top">
   <div class="brand"><h1>استيكرات ترتيب الستوك 🕶️</h1><span id="status" class="status">جاري التحميل…</span></div>
-  <div class="tabs" id="tabs"></div>
+  <div class="nav" id="tabs"></div>
   <div class="tools">
     <button class="tb pri" id="bPdf">طباعة PDF 🖨️</button>
-    <button class="tb" id="bTab">التاب ده ⋮</button>
-    <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
-    <button class="tb" id="bImp">استيراد من الشيت 📥</button>
-    <button class="tb" id="bImgs">رفع صور بالجملة 🖼️</button>
     <button class="tb" id="bNew">موديل وصل جديد R ➕</button>
-    <button class="tb" id="bBak">نسخة احتياطية 💾</button>
+    <button class="tb" id="bSet">إعدادات الصفحة ⚙️</button>
+    <button class="tb" id="bMore">المزيد ⋯</button>
   </div>
 </div>
 <div class="stage" id="stage">
@@ -225,8 +240,26 @@ function pageHTML(tab, live) {
   });
   return s + '</div>';
 }
+const COL_ORDER = ['30S', 'BLC', 'OC'], GEN_ORDER = ['UNISEX', 'MEN', 'WOMEN'];
+const COL_NAME = {'30S': 'ثرتي سن ديز', 'BLC': 'بلاك أوت', 'OC': 'أوبتيكال كلوب'};
+const rank = (arr, x) => { const i = arr.indexOf(x); return i < 0 ? 99 : i; };
+function normGen(g) { g = String(g || '').toUpperCase().trim(); if (/^UN/.test(g)) return 'UNISEX'; if (/^WOM/.test(g)) return 'WOMEN'; if (/^MEN/.test(g)) return 'MEN'; return g; }
+function migrate(t) {
+  if (t.col == null) { const b = t.blocks.find(b => b.head.some(x => String(x).trim())); t.col = b ? String(b.head[0]).toUpperCase().trim() : ''; t.gen = b ? normGen(b.head[b.head.length - 1]) : ''; }
+  t.col = String(t.col || '').trim() || 'أخرى'; t.gen = normGen(t.gen) || 'عام';
+}
+function colList() { return [...new Set(S.tabs.map(t => t.col))].sort((a, b) => rank(COL_ORDER, a) - rank(COL_ORDER, b) || ncmp(a, b)); }
+function genList(col) { return [...new Set(S.tabs.filter(t => t.col === col).map(t => t.gen))].sort((a, b) => rank(GEN_ORDER, a) - rank(GEN_ORDER, b) || ncmp(a, b)); }
+function pagesOf(col, gen) { return S.tabs.map((t, i) => i).filter(i => S.tabs[i].col === col && S.tabs[i].gen === gen); }
+function pageNo(i) { const t = S.tabs[i]; return pagesOf(t.col, t.gen).indexOf(i) + 1; }
+function tabLabel(t) { const i = S.tabs.indexOf(t), n = pagesOf(t.col, t.gen).length; return `${t.col} ${t.gen}` + (n > 1 ? ` ${pageNo(i)}` : ''); }
+function countModels(idxs) { let n = 0; idxs.forEach(i => { const t = S.tabs[i]; t.blocks.forEach(b => { if (!b.hidden) b.items.forEach(it => { if (rowModel(t, it)) n++; }); }); }); return n; }
 function renderTabs() {
-  $('#tabs').innerHTML = S.tabs.map((t, i) => `<button class="tab ${i === cur ? 'on' : ''}" data-i="${i}">${esc(t.name)}</button>`).join('') + '<button class="tab add" data-add="1">＋ تاب</button>';
+  const t = T(), pages = pagesOf(t.col, t.gen);
+  let h = '<div class="mrow">' + colList().map(c => `<button class="mt ${c === t.col ? 'on' : ''}" data-col="${esc(c)}"><b>${esc(c)}</b><small>${esc(COL_NAME[c] || '')}</small></button>`).join('') + '</div>';
+  h += '<div class="srow">' + genList(t.col).map(g => `<button class="st ${g === t.gen ? 'on' : ''}" data-gen="${esc(g)}">${esc(g)}<span class="cnt">${countModels(pagesOf(t.col, g))}</span></button>`).join('') + '</div>';
+  h += '<div class="prow"><span class="lbl">الصفحات:</span>' + pages.map((i, k) => `<button class="pg ${i === cur ? 'on' : ''}" data-i="${i}">${k + 1}</button>`).join('') + '<button class="pg add" data-add="1">＋ صفحة</button></div>';
+  $('#tabs').innerHTML = h;
 }
 function renderPage() {
   const tab = T(), L = layout(tab), wrap = $('#wrap');
@@ -235,6 +268,7 @@ function renderPage() {
   wrap.style.width = (L.W * K * sc) + 'px'; wrap.style.height = (L.H * K * sc) + 'px';
   wrap.innerHTML = pageHTML(tab, true);
   wrap.firstChild.style.transform = `scale(${sc})`;
+  const se = wrap.querySelector('.blk.sel'); if (se && document.body.classList.contains('shopen') && window.innerWidth < 900) { const r = se.getBoundingClientRect(), top = $('.top').getBoundingClientRect().bottom; if (r.top < top || r.bottom > window.innerHeight * 0.42) window.scrollBy({top: r.top - top - 10, behavior: 'smooth'}); }
   const w = $('#warn');
   if (L.over) { w.style.display = 'block'; w.textContent = `تنبيه: المربعات أكبر من مساحة الورقة (${L.totW.toFixed(0)}×${L.totH.toFixed(0)} مم) — صغّر المقاسات أو قلّل الصفوف`; } else w.style.display = 'none';
 }
@@ -284,36 +318,60 @@ function askText(title, val) {
     m.querySelector('#aN').onclick = () => { closeModal(); res(null); };
   });
 }
-function openSheet(title, html) { $('#shT').textContent = title; $('#shB').innerHTML = html; $('#sheet').classList.add('open'); return $('#shB'); }
-function closeSheet() { $('#sheet').classList.remove('open'); if (sel) { sel = null; render(true); } }
+function openSheet(title, html) { const keep = $('#sheet').scrollTop; $('#shT').textContent = title; $('#shB').innerHTML = html; const was = $('#sheet').classList.contains('open'); $('#sheet').classList.add('open'); document.body.classList.add('shopen'); if (was) $('#sheet').scrollTop = keep; if (!was) setTimeout(() => render(true), 210); return $('#shB'); }
+function closeSheet() { closeSheetQuiet(); sel = null; setTimeout(() => render(true), 210); }
 $('#shX').onclick = closeSheet;
 
 /* ---------- tabs ---------- */
-$('#tabs').addEventListener('click', async e => {
+$('#tabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.add) { const n = await askText('اسم التاب الجديد', 'صفحة ' + (S.tabs.length + 1)); if (n == null) return; const t = JSON.parse(JSON.stringify(T())); t.id = uid(); t.name = n || 'صفحة'; t.blocks = []; ensureBlocks(t); S.tabs.push(t); cur = S.tabs.length - 1; sel = null; changed(); return; }
-  const i = +b.dataset.i; if (i === cur) { tabMenu(); return; }
-  cur = i; sel = null; $('#sheet').classList.remove('open'); render(true);
+  let ni = null;
+  if (b.dataset.col != null) { const g = genList(b.dataset.col); ni = pagesOf(b.dataset.col, g.includes(T().gen) ? T().gen : g[0])[0]; }
+  else if (b.dataset.gen != null) ni = pagesOf(T().col, b.dataset.gen)[0];
+  else if (b.dataset.add) { const src = T(), t = JSON.parse(JSON.stringify(src)); t.id = uid(); t.blocks = []; ensureBlocks(t); const last = pagesOf(src.col, src.gen).pop(); S.tabs.splice(last + 1, 0, t); cur = last + 1; sel = null; closeSheetQuiet(); changed(); toast('اتضافت صفحة جديدة ✓'); return; }
+  else if (b.dataset.i != null) { const i = +b.dataset.i; if (i === cur) { tabMenu(); return; } ni = i; }
+  if (ni == null) return;
+  cur = ni; sel = null; closeSheetQuiet(); render(true);
 });
-$('#bTab').onclick = tabMenu;
+function closeSheetQuiet() { $('#sheet').classList.remove('open'); document.body.classList.remove('shopen'); }
+$('#bMore').onclick = () => {
+  const m = modal(`<div class="sb"><b>المزيد</b><div class="row" style="flex-direction:column;align-items:stretch;margin-top:10px">
+  <button class="btn" data-a="page">إدارة الصفحة دي (${esc(tabLabel(T()))}) 📄</button>
+  <button class="btn" data-a="sec">إضافة كولكشن أو نوع جديد ➕</button>
+  <button class="btn" data-a="imp">استيراد من الشيت 📥</button>
+  <button class="btn" data-a="imgs">رفع صور بالجملة 🖼️</button>
+  <button class="btn" data-a="bak">نسخة احتياطية 💾</button>
+  <button class="btn" data-a="x">إغلاق</button></div></div>`);
+  m.onclick = e => { const a = e.target.dataset.a; if (!a) return; closeModal();
+    if (a === 'page') tabMenu(); if (a === 'sec') newSection(); if (a === 'imp') openImport(); if (a === 'imgs') openBulkImgs(); if (a === 'bak') openBackup(); };
+};
+function newSection() {
+  const m = modal(`<div class="sb"><b>كولكشن أو نوع جديد</b><div class="row" style="margin-top:10px"><div class="fld"><label>الكولكشن</label><input type="text" id="nC" class="ltr" value="${esc(T().col)}"></div><div class="fld"><label>النوع</label><input type="text" id="nG" class="ltr" placeholder="MEN / WOMEN / UNISEX"></div></div><div class="row"><button class="btn pri" id="nY">إضافة</button><button class="btn" id="nN">إلغاء</button></div></div>`);
+  m.querySelector('#nN').onclick = closeModal;
+  m.querySelector('#nY').onclick = () => {
+    const c = m.querySelector('#nC').value.trim().toUpperCase(), g = normGen(m.querySelector('#nG').value); if (!c || !g) return toast('اكتب الكولكشن والنوع');
+    if (pagesOf(c, g).length) { cur = pagesOf(c, g)[0]; closeModal(); render(true); return toast('القسم ده موجود بالفعل'); }
+    const t = JSON.parse(JSON.stringify(T())); t.id = uid(); t.col = c; t.gen = g; t.blocks = []; ensureBlocks(t); t.blocks[0].head = t.colT.map((_, k) => k === 0 ? c : k === lateIdx(t) ? '1' : k === t.colT.length - 1 ? g : '');
+    S.tabs.push(t); cur = S.tabs.length - 1; sel = null; closeModal(); changed(); toast('اتضاف ✓');
+  };
+}
 function tabMenu() {
-  const m = modal(`<div class="sb"><b style="direction:ltr;display:block;text-align:right;margin-bottom:10px">${esc(T().name)}</b>
+  const m = modal(`<div class="sb"><b style="margin-bottom:10px;display:block">صفحة <span style="direction:ltr;display:inline-block">${esc(tabLabel(T()))}</span></b>
   <div class="row" style="flex-direction:column;align-items:stretch">
-  <button class="btn" data-a="ren">تغيير اسم التاب ✏️</button>
-  <button class="btn" data-a="dup">نسخ التاب ده 📄</button>
+  <button class="btn" data-a="ren">نقلها لكولكشن أو نوع تاني ✏️</button>
+  <button class="btn" data-a="dup">نسخ الصفحة دي 📄</button>
   <button class="btn" data-a="sortall">إعادة ترتيب الكل تصاعدي ↕️</button>
-  <button class="btn" data-a="left">نقل التاب يمين ➡️</button>
-  <button class="btn" data-a="right">نقل التاب شمال ⬅️</button>
-  <button class="btn dan" data-a="del">حذف التاب 🗑️</button>
+  <button class="btn" data-a="left">تقديم الصفحة خطوة ➡️</button>
+  <button class="btn" data-a="right">تأخير الصفحة خطوة ⬅️</button>
+  <button class="btn dan" data-a="del">حذف الصفحة 🗑️</button>
   <button class="btn" data-a="x">إغلاق</button></div></div>`);
   m.onclick = async e => {
     const a = e.target.dataset.a; if (!a) return; closeModal();
-    if (a === 'ren') { const n = await askText('اسم التاب', T().name); if (n) { T().name = n; changed(); } }
-    if (a === 'dup') { const t = JSON.parse(JSON.stringify(T())); t.id = uid(); t.name += ' (نسخة)'; S.tabs.splice(cur + 1, 0, t); cur++; changed(); }
+    if (a === 'ren') { const c = await askText('الكولكشن (30S / BLC / OC)', T().col); if (!c) return; const g = await askText('النوع (MEN / WOMEN / UNISEX)', T().gen); if (!g) return; T().col = c.toUpperCase(); T().gen = normGen(g); changed(); }
+    if (a === 'dup') { const t = JSON.parse(JSON.stringify(T())); t.id = uid(); S.tabs.splice(cur + 1, 0, t); cur++; changed(); }
     if (a === 'sortall') { if (await ask('هرتّب كل الموديلات في الصفحة دي تصاعدي من أول مربع لآخر مربع، وهشيل علامة R. تمام؟')) { sortAll(T()); changed(); toast('اترتّبت ✓'); } }
-    if (a === 'left' && cur > 0) { [S.tabs[cur - 1], S.tabs[cur]] = [S.tabs[cur], S.tabs[cur - 1]]; cur--; changed(); }
-    if (a === 'right' && cur < S.tabs.length - 1) { [S.tabs[cur + 1], S.tabs[cur]] = [S.tabs[cur], S.tabs[cur + 1]]; cur++; changed(); }
-    if (a === 'del') { if (S.tabs.length === 1) { toast('لازم يفضل تاب واحد على الأقل'); return; } if (await ask(`حذف التاب «${esc(T().name)}» نهائيًا؟`, 'حذف', true)) { S.tabs.splice(cur, 1); cur = Math.max(0, cur - 1); sel = null; changed(); } }
+    if (a === 'left' || a === 'right') { const ps = pagesOf(T().col, T().gen), k = ps.indexOf(cur), o = ps[k + (a === 'left' ? -1 : 1)]; if (o == null) return; [S.tabs[o], S.tabs[cur]] = [S.tabs[cur], S.tabs[o]]; cur = o; changed(); }
+    if (a === 'del') { if (S.tabs.length === 1) { toast('لازم تفضل صفحة واحدة على الأقل'); return; } if (await ask(`حذف صفحة «${esc(tabLabel(T()))}» نهائيًا؟`, 'حذف', true)) { const col = T().col, gen = T().gen; S.tabs.splice(cur, 1); const sib = pagesOf(col, gen), sc = pagesOf(col, genList(col)[0]); cur = sib.length ? sib[Math.max(0, Math.min(sib.length - 1, pageNo(sib[0]) - 1))] : sc.length ? sc[0] : 0; sel = null; changed(); } }
   };
 }
 function sortAll(tab) {
@@ -420,11 +478,11 @@ $('#fImg').onchange = async e => {
     changed(); openEditor(); toast('الصورة اتضافت ✓');
   } catch (er) { toast('مقدرتش أقرا الصورة دي'); }
 };
-$('#bImgs').onclick = () => {
+function openBulkImgs() {
   const m = modal(`<div class="sb"><b>رفع صور بالجملة</b><p class="small" style="font-size:13.5px">سمّي كل صورة برقم الموديل (مثلًا <span class="ltr" style="display:inline-block">207.jpg</span>) واختارهم كلهم مرة واحدة — كل صورة هتتحط جنب الموديل بتاعها في كل التابات تلقائي، والفراغ الأبيض حواليها هيتقص.</p><div class="row"><button class="btn pri" id="iGo">اختيار الصور 🖼️</button><button class="btn" id="iX">إلغاء</button></div><div id="iP" class="small" style="margin-top:10px"></div></div>`);
   m.querySelector('#iX').onclick = closeModal;
   m.querySelector('#iGo').onclick = () => { $('#fImgs').value = ''; $('#fImgs').click(); };
-};
+}
 $('#fImgs').onchange = async e => {
   const files = [...e.target.files]; if (!files.length) return;
   const p = $('#iP'); let ok = 0;
@@ -449,7 +507,7 @@ function openSettings() {
   h += `<div class="grp"><h4>أعمدة المربع (بالترتيب من الشمال لليمين في الورقة)</h4>` + t.colT.map((ty, c) => `<div class="colrow"><b style="width:22px">${c + 1}</b><select data-ct="${c}"><option value="text" ${ty === 'text' ? 'selected' : ''}>نص / رقم الموديل</option><option value="qr" ${ty === 'qr' ? 'selected' : ''}>كود QR</option><option value="image" ${ty === 'image' ? 'selected' : ''}>صورة</option></select><span class="small">عرض</span><input type="number" step="0.5" min="5" data-cw="${c}" value="${t.colW[c]}"><span class="small">مم</span><button class="btn dan" data-dc="${c}" style="padding:4px 9px">✕</button></div>`).join('') +
     `<div class="row"><button class="btn" data-a="addcol">إضافة عمود ➕</button><button class="btn" data-a="allrows">إضافة صف لكل المربعات ➕</button><button class="btn" data-a="delrows">حذف آخر صف من كل المربعات ➖</button></div></div>`;
   h += `<div class="grp"><h4>كود QR (لكل التابات)</h4><div class="fld"><label>شكل محتوى الـQR — اكتب {model} مكان رقم الموديل</label><input type="text" class="ltr" data-q="1" value="${esc(S.qrTpl)}"></div></div>`;
-  const body = openSheet('إعدادات الصفحة — ' + t.name, h);
+  const body = openSheet('إعدادات الصفحة — ' + tabLabel(t), h);
   body.onchange = async e => {
     const el = e.target;
     if (el.dataset.n) {
@@ -521,7 +579,7 @@ function parseDelim(text) {
 }
 function loadScript(src) { return new Promise((res, rej) => { if ([...document.scripts].some(s => s.src === src)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 let IMP = null;
-$('#bImp').onclick = () => {
+function openImport() {
   const m = modal(`<div class="sb"><b>استيراد من جوجل شيت</b>
    <p class="small" style="font-size:13.5px">انسخ الجدول من الشيت (مع صف العناوين) والصقه هنا، أو ارفع ملف CSV / Excel (من جوجل شيت: ملف ← تنزيل).</p>
    <div class="fld"><textarea id="impT" rows="5" class="ltr" placeholder="Collection	Gender	Model	..."></textarea></div>
@@ -529,7 +587,7 @@ $('#bImp').onclick = () => {
   m.querySelector('#impX').onclick = closeModal;
   m.querySelector('#impF').onclick = () => { $('#fSheet').value = ''; $('#fSheet').click(); };
   m.querySelector('#impGo').onclick = () => { const r = parseDelim(m.querySelector('#impT').value); if (r.length < 2) return toast('محتاج صف عناوين + بيانات'); mapStep(r); };
-};
+}
 $('#fSheet').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -594,7 +652,7 @@ function buildFromRows(data, ci, gi, mi, qi, per, tpl) {
     const perPage = tpl.cols * tpl.rows, pages = Math.ceil(blocks.length / perPage);
     for (let p = 0; p < pages; p++) {
       const t = JSON.parse(JSON.stringify(tpl)); t.id = uid();
-      t.name = [g.col, g.gen].filter(Boolean).join(' ') + (pages > 1 ? ` (${p + 1})` : '') || 'صفحة';
+      t.name = [g.col, g.gen].filter(Boolean).join(' ') || 'صفحة'; t.col = g.col.toUpperCase() || 'أخرى'; t.gen = normGen(g.gen) || 'عام';
       const tc = textCol(t), qc = t.colT.indexOf('qr');
       t.blocks = blocks.slice(p * perPage, (p + 1) * perPage).map((items, j) => {
         const b = emptyBlock(t, 0);
@@ -612,15 +670,15 @@ function buildFromRows(data, ci, gi, mi, qi, per, tpl) {
 }
 
 /* ---------- backup ---------- */
-$('#bBak').onclick = () => {
+function openBackup() {
   const m = modal(`<div class="sb"><b>نسخة احتياطية</b><p class="small" style="font-size:13.5px">نزّل ملف فيه كل التابات والصور، وتقدر ترجّعه في أي وقت.</p><div class="row"><button class="btn pri" id="bkD">تنزيل النسخة 💾</button><button class="btn" id="bkU">استرجاع من ملف 📂</button><button class="btn" id="bkX">إغلاق</button></div></div>`);
   m.querySelector('#bkX').onclick = closeModal;
   m.querySelector('#bkD').onclick = async () => { closeModal(); await saveFile(`stickers-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(S)); };
   m.querySelector('#bkU').onclick = () => { closeModal(); $('#fJson').value = ''; $('#fJson').click(); };
-};
+}
 $('#fJson').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { const s = JSON.parse(await f.text()); if (!s.tabs) throw 0; if (!(await ask('استرجاع النسخة دي هيستبدل كل اللي موجود. تمام؟', 'استرجاع', true))) return; S = s; S.images = S.images || {}; cur = 0; sel = null; changed(); toast('اترجعت ✓'); } catch (er) { toast('الملف ده مش نسخة صحيحة'); }
+  try { const s = JSON.parse(await f.text()); if (!s.tabs) throw 0; if (!(await ask('استرجاع النسخة دي هيستبدل كل اللي موجود. تمام؟', 'استرجاع', true))) return; S = s; S.images = S.images || {}; S.skus = S.skus || {}; S.tabs.forEach(migrate); cur = 0; sel = null; changed(); toast('اترجعت ✓'); } catch (er) { toast('الملف ده مش نسخة صحيحة'); }
 };
 async function saveFile(name, data) {
   if (DL) {
@@ -633,12 +691,12 @@ async function saveFile(name, data) {
 /* ---------- PDF ---------- */
 $('#bPdf').onclick = () => {
   const m = modal(`<div class="sb"><b>طباعة / PDF</b><p class="small" style="font-size:13.5px">هيطلع ملف PDF بمقاس A4 مضبوط بالملّي — افتحه واطبعه بمقاس 100% (Actual size) من غير "Fit to page".</p>
-   <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-p="cur">التاب الحالي بس (${esc(T().name)})</button><button class="btn" data-p="all">كل التابات (${S.tabs.length} صفحة)</button><button class="btn" data-p="pick">اختيار تابات معيّنة</button><button class="btn" data-p="x">إلغاء</button></div><div id="pk"></div></div>`);
+   <div class="row" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-p="cur">الصفحة دي بس (<span style="direction:ltr;display:inline-block">${esc(tabLabel(T()))}</span>)</button><button class="btn" data-p="gen">كل صفحات ${esc(T().col)} ${esc(T().gen)} (${pagesOf(T().col, T().gen).length})</button><button class="btn" data-p="col">كل صفحات ${esc(T().col)} (${S.tabs.filter(t => t.col === T().col).length})</button><button class="btn" data-p="all">كل الصفحات (${S.tabs.length})</button><button class="btn" data-p="pick">اختيار صفحات معيّنة</button><button class="btn" data-p="x">إلغاء</button></div><div id="pk"></div></div>`);
   m.onclick = async e => {
     const p = e.target.dataset.p; if (!p) return;
     if (p === 'x') return closeModal();
-    if (p === 'pick') { m.querySelector('#pk').innerHTML = `<div style="margin-top:10px">${S.tabs.map((t, i) => `<label style="display:block;direction:ltr;text-align:right;padding:3px 0">${esc(t.name)} <input type="checkbox" value="${i}" ${i === cur ? 'checked' : ''}></label>`).join('')}<button class="btn pri" data-p="go" style="margin-top:8px">إنشاء PDF</button></div>`; return; }
-    let tabs = p === 'cur' ? [T()] : p === 'all' ? S.tabs : [...m.querySelectorAll('#pk input:checked')].map(i => S.tabs[+i.value]);
+    if (p === 'pick') { m.querySelector('#pk').innerHTML = `<div style="margin-top:10px">${S.tabs.map((t, i) => `<label style="display:block;direction:ltr;text-align:right;padding:3px 0">${esc(tabLabel(t))} <input type="checkbox" value="${i}" ${i === cur ? 'checked' : ''}></label>`).join('')}<button class="btn pri" data-p="go" style="margin-top:8px">إنشاء PDF</button></div>`; return; }
+    let tabs = p === 'cur' ? [T()] : p === 'gen' ? pagesOf(T().col, T().gen).map(i => S.tabs[i]) : p === 'col' ? S.tabs.filter(t => t.col === T().col) : p === 'all' ? S.tabs : [...m.querySelectorAll('#pk input:checked')].map(i => S.tabs[+i.value]);
     if (!tabs.length) return toast('اختار تاب واحد على الأقل');
     closeModal(); await exportPdf(tabs);
   };
@@ -649,7 +707,7 @@ async function exportPdf(tabs) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     const {jsPDF} = window.jspdf; let doc;
     tabs.forEach((tab, i) => { const o = tab.orient === 'l' ? 'landscape' : 'portrait'; if (!i) doc = new jsPDF({orientation: o, unit: 'mm', format: 'a4'}); else doc.addPage('a4', o); drawTab(doc, tab); });
-    const name = (tabs.length === 1 ? 'sticker-' + tabs[0].name : 'stickers-' + tabs.length + '-pages').replace(/[\\/:*?"<>|]+/g, '-') + '.pdf';
+    const name = (tabs.length === 1 ? 'sticker-' + tabLabel(tabs[0]) : 'stickers-' + [...new Set(tabs.map(t => t.col))].join('-') + '-' + tabs.length + 'p').replace(/[\\/:*?"<>|]+/g, '-') + '.pdf';
     const ok = await saveFile(name, doc.output('blob'));
     if (!ok && !DL) printFallback(tabs);
   } catch (e) { console.error(e); toast('مقدرتش أعمل PDF — هفتح الطباعة العادية'); printFallback(tabs); }
@@ -711,7 +769,7 @@ async function boot() {
   try { const r = await fetch('data/state.json', {cache: 'no-store'}); if (r.ok) fileS = await r.json(); } catch (e) {}
   try { const l = localStorage.getItem(LS); if (l) localS = JSON.parse(l); } catch (e) {}
   S = [fileS, localS].filter(x => x && x.tabs && x.tabs.length).sort((a, b) => (b.updated || 0) - (a.updated || 0))[0] || demo();
-  S.images = S.images || {}; S.skus = S.skus || {}; S.qrTpl = S.qrTpl || '{model}';
+  S.images = S.images || {}; S.skus = S.skus || {}; S.qrTpl = S.qrTpl || '{model}'; S.tabs.forEach(migrate); { const o = []; colList().forEach(c => genList(c).forEach(g => pagesOf(c, g).forEach(i => o.push(S.tabs[i])))); S.tabs = o; }
   render(true);
   setStatus('جاهز', 'ok');
   if (window.claude && claude.use) {
